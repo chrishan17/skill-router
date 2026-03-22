@@ -362,8 +362,8 @@
 <!-- HERO -->
 <div class="hero">
   <span class="hero-tag">v1.0.0 · MIT · Python 3.9+</span>
-  <h1>Stop <em>drowning</em><br>in skills.</h1>
-  <p>skill-router organises your AI agent skills into single-entry-point routers — cutting context bloat, eliminating routing conflicts, and keeping all your originals intact.</p>
+  <h1>Skills you<br>installed but<br>never <em>trigger.</em></h1>
+  <p>skill-router wraps poorly-described skills in a router with a proper WHAT + WHEN + NOT-WHEN description — so your agent actually knows when to use them.</p>
   <div class="hero-ctas">
     <a href="#start" class="btn btn-primary">Get Started →</a>
     <a href="https://github.com/chrishan17/skill-router" class="btn btn-secondary" target="_blank">View on GitHub</a>
@@ -377,8 +377,8 @@
     <div class="stat-label">Supported agents</div>
   </div>
   <div class="stat">
-    <div class="stat-num"><span>1</span></div>
-    <div class="stat-label">Description in context<br>instead of N</div>
+    <div class="stat-num"><span>3</span></div>
+    <div class="stat-label">Parts every good<br>description needs</div>
   </div>
   <div class="stat">
     <div class="stat-num"><span>0</span></div>
@@ -390,22 +390,22 @@
 <section class="problem">
   <div class="section-inner">
     <span class="section-label">The Problem</span>
-    <h2 class="section-title">More skills,<br>worse results.</h2>
+    <h2 class="section-title">Installed.<br>Never used.</h2>
     <div class="problem-grid">
       <div class="problem-item">
         <span class="problem-num">01.</span>
-        <h3>Context Window Bloat</h3>
-        <p>Every installed skill's description loads into context on every turn — whether it's relevant or not. With 30+ skills, this consumes thousands of tokens and dilutes the model's attention across the board.</p>
+        <h3>Vague Descriptions</h3>
+        <p>Most third-party skills ship with descriptions like "A tool for animating UI components." No trigger conditions. No guidance on when to prefer it over alternatives. The agent sees it and doesn't know when it applies.</p>
       </div>
       <div class="problem-item">
         <span class="problem-num">02.</span>
-        <h3>Routing Conflicts</h3>
-        <p>Similar skill descriptions cause the agent to invoke the wrong skill. An animation skill fires when you need a polish skill. A Python skill triggers on Go code. Users just notice their agent "feels dumber."</p>
+        <h3>Missing Trigger Conditions</h3>
+        <p>Without explicit WHEN conditions, the agent guesses — and guesses wrong. Skills that should fire on "make this feel alive" never trigger. Skills that shouldn't fire on unrelated requests do. The skill isn't broken; the description is.</p>
       </div>
       <div class="problem-item">
         <span class="problem-num">03.</span>
-        <h3>No Management Layer</h3>
-        <p>There's no npm ls for skills — no unified view of what's installed, what's stale, or what's overlapping. When skills conflict, there's no tool to diagnose why.</p>
+        <h3>No NOT-WHEN Boundaries</h3>
+        <p>Without negative trigger conditions, the agent can't distinguish between adjacent skills. A UI review skill and a UI polish skill look identical from the description alone. One crowds out the other.</p>
       </div>
     </div>
   </div>
@@ -415,36 +415,36 @@
 <section id="how">
   <div class="section-inner">
     <span class="section-label">How It Works</span>
-    <h2 class="section-title">N skills → 1 router.<br>Originals stay put.</h2>
+    <h2 class="section-title">Wrap. Describe.<br>Trigger reliably.</h2>
     <div class="how-grid">
       <div class="how-col">
-        <div class="how-col-title">Before — 6 descriptions in context</div>
-        <pre><span class="dim">.claude/skills/</span>
-  animate/
-  polish/
-  critique/
-  adapt/
-  bolder/
-  colorize/
-<span class="dim">  ↑ all 6 descriptions loaded</span>
-<span class="dim">    on every agent turn</span></pre>
+        <div class="how-col-title">Before — vague, never triggers</div>
+        <pre><span class="dim">animate/SKILL.md</span>
+
+description: &gt;
+  A tool for animating
+  UI components.
+
+<span class="dim">↑ no trigger conditions</span>
+<span class="dim">  agent ignores it</span></pre>
       </div>
       <div class="how-col">
-        <div class="how-col-title">After — 1 description in context</div>
+        <div class="how-col-title">After — router with proper description</div>
         <pre><span class="dim">.claude/skills/</span>
-  animate/       <span class="dim">← untouched</span>
-  polish/        <span class="dim">← untouched</span>
-  critique/      <span class="dim">← untouched</span>
-  adapt/         <span class="dim">← untouched</span>
-  bolder/        <span class="dim">← untouched</span>
-  colorize/      <span class="dim">← untouched</span>
-  <span class="hl">ui-design/</span>     <span class="dim">← router</span>
-    SKILL.md     <span class="dim">← 1 description</span>
-    _manifest.json</pre>
+  animate/         <span class="dim">← untouched</span>
+  polish/          <span class="dim">← untouched</span>
+  <span class="hl">ui-design/</span>       <span class="dim">← router</span>
+    SKILL.md
+    _manifest.json
+
+<span class="dim">description: Use when the user wants</span>
+<span class="dim">to add motion, improve visual feel,</span>
+<span class="dim">or polish UI before shipping. Do NOT</span>
+<span class="dim">use for writing new components.</span></pre>
       </div>
     </div>
     <p style="font-family:var(--mono);font-size:0.8rem;font-weight:400;line-height:1.6;margin-top:2rem;max-width:600px;color:#555;">
-      The router's SKILL.md contains a synthesised description covering all sub-skills, a dispatch table pointing to each original, and a capabilities section. When triggered, the agent reads only the one relevant original — not all of them.
+      The router synthesizes a WHAT + WHEN + NOT-WHEN description from the sub-skills' actual content. When triggered, it dispatches to the right original skill. Originals are never modified.
     </p>
   </div>
 </section>

@@ -6,36 +6,43 @@
 [![Agents](https://img.shields.io/badge/agents-40%2B-yellow?style=flat-square)](skills/skill-router/references/supported-agents.md)
 [![GitHub Pages](https://img.shields.io/badge/docs-GitHub%20Pages-black?style=flat-square)](https://chrishan17.github.io/skill-router/)
 
-An AI agent skill that organises related skills into a **single-entry-point router** — reducing context window bloat and routing conflicts when you have many skills installed.
+An AI agent skill that wraps poorly-described skills in a **well-written router** — so your agent actually knows when to invoke them.
 
 ---
 
 ## The Problem
 
-Every skill's description is loaded into the agent's context window on every turn, whether relevant or not. With 30+ skills, this consumes thousands of tokens and causes the agent to route incorrectly — loading the wrong skill, missing the right one, or simply making poorer decisions across the board.
+Skills only trigger when the agent understands their description well enough to match them to a user request. Most third-party skills are written without explicit trigger conditions: no *when to use*, no *when not to use*, just a vague summary of what the skill does.
 
-**skill-router** solves this by grouping related skills behind a single router skill. Instead of N individual descriptions occupying context, one router description covers all of them.
+The result: you install a skill and your agent never uses it — not because the skill is broken, but because the description doesn't tell the agent when it's relevant.
+
+**skill-router** wraps one or more skills in a new router skill with a properly synthesized description following the **WHAT + WHEN + NOT-WHEN** pattern. The originals are untouched; the router makes them reliably invokable.
 
 ## How It Works
 
+Third-party skills often ship with descriptions like this:
+
 ```
-Before                          After
-──────────────────────           ──────────────────────
-.claude/skills/                  .claude/skills/
-  animate/                         animate/        ← untouched
-  polish/                          polish/         ← untouched
-  critique/                        critique/       ← untouched
-  adapt/                           adapt/          ← untouched
-  bolder/                          bolder/         ← untouched
-  colorize/                        colorize/       ← untouched
-  (6 descriptions loaded)          ui-design/      ← router
-                                     SKILL.md      ← routes to all 6
-                                     _manifest.json
-                                   (1 description loaded)
+description: A tool for animating UI components.
+```
+
+No trigger conditions. No guidance on when to use it vs. something else. The agent sees it, doesn't know when it applies, and ignores it.
+
+skill-router synthesizes a proper description and creates a router on top:
+
+```
+.claude/skills/
+  animate/           ← original, untouched
+  polish/            ← original, untouched
+  critique/          ← original, untouched
+  ui-design/         ← router created by skill-router
+    SKILL.md         ← "Use when the user wants to improve visual quality,
+    _manifest.json      add motion to interactions, or review UI before shipping.
+                        Do NOT use for writing new components from scratch."
 ```
 
 The router's `SKILL.md` contains:
-- A synthesised description covering all sub-skills (WHAT + WHEN + NOT-WHEN)
+- A synthesized description (WHAT + WHEN + NOT-WHEN) covering all sub-skills
 - A Dispatch section with relative references to each original skill
 - A Capabilities section listing each sub-skill's full description
 
