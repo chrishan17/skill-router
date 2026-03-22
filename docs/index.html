@@ -3,25 +3,62 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>skill-router — Stop Drowning In Skills</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+  <title>skill-router — Skills that actually trigger</title>
 
+  <!-- Social / OG -->
+  <meta name="description" content="skill-router wraps poorly-described skills in a router with a proper WHAT + WHEN + NOT-WHEN description — so your agent actually knows when to use them.">
+  <meta property="og:title" content="skill-router — Skills that actually trigger">
+  <meta property="og:description" content="Wrap any AI agent skill in a properly-described router. Supports 40+ agents. Non-destructive. Python 3.9+.">
+  <meta property="og:url" content="https://chrishan17.github.io/skill-router/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <!-- Fonts: Bebas Neue (display) + IBM Plex Sans (UI) + IBM Plex Mono (code) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;700&family=IBM+Plex+Sans:wght@400;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── RESET ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── TOKENS ── */
     :root {
-      --black: #0a0a0a;
-      --white: #FAFAF8;
-      --yellow: #FFE600;
-      --border: 3px solid #0a0a0a;
-      --font: 'Arial Black', 'Helvetica Neue', Arial, sans-serif;
-      --mono: 'Courier New', Courier, monospace;
+      --black:      #0a0a0a;
+      --white:      #FAFAF8;
+      --yellow:     #FFE600;
+      --gray-90:    #1a1a1a;
+      --gray-70:    #333333;
+      --gray-50:    #666666;
+      --gray-30:    #999999;
+      --gray-15:    #cccccc;
+      --gray-05:    #f0efed;
+
+      --border:     3px solid var(--black);
+      --border-dim: 2px solid var(--gray-70);
+
+      --font-display: 'Bebas Neue', 'Arial Black', sans-serif;
+      --font-sans:    'IBM Plex Sans', 'Arial Black', sans-serif;
+      --font-mono:    'IBM Plex Mono', 'Courier New', monospace;
+
+      --transition: 150ms ease-out;
     }
+
+    /* ── BASE ── */
+    html { scroll-behavior: smooth; }
 
     body {
       background: var(--white);
       color: var(--black);
-      font-family: var(--font);
-      font-weight: 900;
-      line-height: 1;
+      font-family: var(--font-sans);
+      font-weight: 400;
+      line-height: 1.5;
+    }
+
+    /* ── FOCUS ── */
+    :focus-visible {
+      outline: 3px solid var(--yellow);
+      outline-offset: 2px;
     }
 
     /* ── NAV ── */
@@ -38,7 +75,9 @@
       z-index: 100;
     }
     .nav-logo {
-      font-size: 1.1rem;
+      font-family: var(--font-sans);
+      font-size: 1rem;
+      font-weight: 900;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       text-decoration: none;
@@ -49,41 +88,49 @@
       padding: 2px 6px;
       margin-right: 4px;
     }
-    .nav-links { display: flex; gap: 0; }
+    .nav-links { display: flex; }
     .nav-links a {
       display: block;
       padding: 0 1.25rem;
       height: 64px;
       line-height: 64px;
+      font-family: var(--font-sans);
       font-size: 0.75rem;
+      font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
       text-decoration: none;
       color: var(--black);
       border-left: var(--border);
+      transition: background var(--transition), color var(--transition);
     }
     .nav-links a:hover { background: var(--yellow); }
 
     /* ── HERO ── */
-    .hero {
-      padding: 5rem 2rem 4rem;
+    header {
       border-bottom: var(--border);
+    }
+    .hero-inner {
       max-width: 900px;
+      padding: 5rem 2rem 4rem;
     }
     .hero-tag {
       display: inline-block;
       border: var(--border);
+      font-family: var(--font-sans);
       font-size: 0.7rem;
+      font-weight: 700;
       letter-spacing: 0.2em;
       text-transform: uppercase;
       padding: 4px 10px;
       margin-bottom: 2rem;
     }
     .hero h1 {
-      font-size: clamp(3rem, 9vw, 7rem);
+      font-family: var(--font-display);
+      font-size: clamp(4rem, 11vw, 8.5rem);
       text-transform: uppercase;
       line-height: 0.95;
-      letter-spacing: -0.02em;
+      letter-spacing: 0.01em;
       margin-bottom: 2rem;
     }
     .hero h1 em {
@@ -92,25 +139,26 @@
       padding: 0 8px;
     }
     .hero p {
-      font-family: var(--mono);
+      font-family: var(--font-mono);
       font-size: 1rem;
-      font-weight: 400;
-      line-height: 1.6;
-      max-width: 580px;
+      line-height: 1.7;
+      max-width: 560px;
       margin-bottom: 2.5rem;
+      color: var(--gray-90);
     }
-    .hero-ctas { display: flex; gap: 0; flex-wrap: wrap; }
+    .hero-ctas { display: flex; flex-wrap: wrap; }
     .btn {
       display: inline-block;
       padding: 1rem 2rem;
       border: var(--border);
-      font-family: var(--font);
-      font-size: 0.85rem;
+      font-family: var(--font-sans);
+      font-size: 0.8rem;
       font-weight: 900;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
       text-decoration: none;
       cursor: pointer;
+      transition: background var(--transition), color var(--transition);
     }
     .btn-primary { background: var(--yellow); color: var(--black); }
     .btn-primary:hover { background: var(--black); color: var(--yellow); }
@@ -129,29 +177,30 @@
     }
     .stat:last-child { border-right: none; }
     .stat-num {
-      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      font-family: var(--font-display);
+      font-size: clamp(3rem, 7vw, 5.5rem);
       line-height: 1;
       margin-bottom: 0.5rem;
     }
     .stat-num span { background: var(--yellow); padding: 0 4px; }
     .stat-label {
-      font-family: var(--mono);
+      font-family: var(--font-mono);
       font-size: 0.75rem;
-      font-weight: 400;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
+      color: var(--gray-50);
+      line-height: 1.5;
     }
 
-    /* ── SECTION ── */
-    section {
-      border-bottom: var(--border);
-    }
+    /* ── SECTIONS ── */
     .section-inner {
       max-width: 1200px;
       padding: 4rem 2rem;
     }
     .section-label {
+      font-family: var(--font-sans);
       font-size: 0.65rem;
+      font-weight: 700;
       letter-spacing: 0.25em;
       text-transform: uppercase;
       border: var(--border);
@@ -160,10 +209,11 @@
       margin-bottom: 2rem;
     }
     .section-title {
-      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-family: var(--font-display);
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
       text-transform: uppercase;
       line-height: 1;
-      letter-spacing: -0.01em;
+      letter-spacing: 0.01em;
       margin-bottom: 2rem;
     }
 
@@ -171,6 +221,7 @@
     .problem {
       background: var(--black);
       color: var(--white);
+      border-top: var(--border);
       border-bottom: var(--border);
     }
     .problem .section-label { border-color: var(--white); }
@@ -178,48 +229,53 @@
     .problem-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 0;
     }
     .problem-item {
-      border: 2px solid #333;
+      border: var(--border-dim);
       padding: 2rem;
       margin: -1px;
+      transition: border-color var(--transition);
     }
     .problem-item:hover { border-color: var(--yellow); }
     .problem-num {
-      font-size: 3rem;
+      font-family: var(--font-display);
+      font-size: 3.5rem;
       color: var(--yellow);
       display: block;
       margin-bottom: 1rem;
+      line-height: 1;
     }
     .problem-item h3 {
-      font-size: 1rem;
-      letter-spacing: 0.05em;
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      font-weight: 900;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
       margin-bottom: 0.75rem;
     }
     .problem-item p {
-      font-family: var(--mono);
+      font-family: var(--font-mono);
       font-size: 0.8rem;
-      font-weight: 400;
-      line-height: 1.6;
-      color: #bbb;
+      line-height: 1.7;
+      color: var(--gray-30);
     }
 
     /* ── HOW IT WORKS ── */
+    #how { border-bottom: var(--border); }
     .how-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 0;
     }
-    @media (max-width: 768px) { .how-grid { grid-template-columns: 1fr; } }
     .how-col {
       padding: 2rem;
       border: var(--border);
       margin: -1px;
+      overflow: hidden;
     }
     .how-col-title {
+      font-family: var(--font-sans);
       font-size: 0.7rem;
+      font-weight: 700;
       letter-spacing: 0.2em;
       text-transform: uppercase;
       margin-bottom: 1.5rem;
@@ -227,92 +283,110 @@
       border-bottom: 2px solid var(--black);
     }
     .how-col pre {
-      font-family: var(--mono);
+      font-family: var(--font-mono);
       font-size: 0.78rem;
-      font-weight: 400;
-      line-height: 1.8;
+      line-height: 1.9;
       white-space: pre;
       overflow-x: auto;
+      max-width: 100%;
     }
     .how-col pre .hl { background: var(--yellow); padding: 0 2px; }
-    .how-col pre .dim { color: #888; }
+    .how-col pre .dim { color: var(--gray-50); }
+    .how-note {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      line-height: 1.7;
+      margin-top: 2rem;
+      max-width: 600px;
+      color: var(--gray-50);
+    }
 
     /* ── WORKFLOW ── */
+    #workflow { border-bottom: var(--border); }
     .workflow-steps {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 0;
     }
     .step {
       border: var(--border);
       padding: 2rem;
       margin: -1px;
       position: relative;
+      transition: background var(--transition);
     }
     .step:hover { background: var(--yellow); }
     .step-num {
-      font-size: 4rem;
+      font-family: var(--font-display);
+      font-size: 4.5rem;
       line-height: 1;
-      color: #ddd;
+      color: var(--gray-15);
       position: absolute;
       top: 1rem;
       right: 1.5rem;
+      transition: color var(--transition);
     }
+    .step:hover .step-num { color: var(--gray-70); }
     .step h3 {
-      font-size: 1rem;
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      font-weight: 900;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.06em;
       margin-bottom: 0.75rem;
     }
     .step p {
-      font-family: var(--mono);
+      font-family: var(--font-mono);
       font-size: 0.8rem;
-      font-weight: 400;
-      line-height: 1.6;
-      color: #444;
+      line-height: 1.7;
+      color: var(--gray-50);
+      transition: color var(--transition);
     }
     .step:hover p { color: var(--black); }
-    .step:hover .step-num { color: #aaa; }
 
     /* ── AGENTS ── */
+    #agents { border-bottom: var(--border); }
     .agents-grid {
       display: flex;
       flex-wrap: wrap;
-      gap: 0;
     }
     .agent-chip {
       border: var(--border);
       padding: 0.5rem 1rem;
-      font-family: var(--mono);
+      font-family: var(--font-mono);
       font-size: 0.75rem;
-      font-weight: 400;
       text-transform: lowercase;
       margin: -1px;
       white-space: nowrap;
+      transition: background var(--transition), font-weight var(--transition);
     }
-    .agent-chip:hover { background: var(--yellow); font-weight: 700; cursor: default; }
+    .agent-chip:hover { background: var(--yellow); font-weight: 700; }
     .agents-subhead {
+      font-family: var(--font-sans);
       font-size: 0.7rem;
+      font-weight: 700;
       letter-spacing: 0.15em;
       text-transform: uppercase;
+      color: var(--gray-50);
       margin: 2rem 0 1rem;
       padding-bottom: 0.5rem;
       border-bottom: 2px solid var(--black);
     }
+    .agents-subhead:first-of-type { margin-top: 0; }
 
     /* ── GET STARTED ── */
+    #start { border-bottom: var(--border); }
     .install-box {
       border: var(--border);
       padding: 2rem;
       margin-bottom: 2rem;
       background: var(--black);
       color: var(--yellow);
-      font-family: var(--mono);
+      font-family: var(--font-mono);
       font-size: 0.9rem;
-      font-weight: 400;
-      line-height: 2;
+      line-height: 2.2;
+      overflow-x: auto;
     }
-    .install-box .comment { color: #555; }
+    .install-box .comment { color: var(--gray-50); }
     .install-box .cmd { color: var(--white); }
 
     /* ── FOOTER ── */
@@ -323,68 +397,88 @@
       justify-content: space-between;
       flex-wrap: wrap;
       gap: 1rem;
-      border-top: var(--border);
     }
     footer p {
-      font-family: var(--mono);
+      font-family: var(--font-mono);
       font-size: 0.75rem;
-      font-weight: 400;
-      letter-spacing: 0.05em;
+      color: var(--gray-50);
     }
     footer a {
       color: var(--black);
       text-decoration: none;
       border-bottom: 2px solid var(--black);
+      transition: background var(--transition);
     }
     footer a:hover { background: var(--yellow); }
 
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .how-grid { grid-template-columns: 1fr; }
+    }
     @media (max-width: 600px) {
       .stats { grid-template-columns: 1fr; }
       .stat { border-right: none; border-bottom: var(--border); }
-      .how-col pre { font-size: 0.65rem; }
+      .stat:last-child { border-bottom: none; }
+      .how-col pre { font-size: 0.68rem; }
+      nav { padding: 0 1rem; }
+      .hero-inner { padding: 3rem 1rem 2.5rem; }
+    }
+
+    /* ── REDUCED MOTION ── */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition-duration: 0ms !important; }
+      html { scroll-behavior: auto; }
     }
   </style>
 </head>
 <body>
 
 <!-- NAV -->
-<nav>
+<nav aria-label="Main navigation">
   <a class="nav-logo" href="#">
     <span>SR</span>SKILL-ROUTER
   </a>
   <div class="nav-links">
     <a href="#how">How It Works</a>
     <a href="#agents">Agents</a>
-    <a href="https://github.com/chrishan17/skill-router" target="_blank">GitHub ↗</a>
+    <a href="https://github.com/chrishan17/skill-router" target="_blank" rel="noopener">GitHub ↗</a>
   </div>
 </nav>
 
+<main>
+
 <!-- HERO -->
-<div class="hero">
-  <span class="hero-tag">v1.0.0 · MIT · Python 3.9+</span>
-  <h1>Skills you<br>installed but<br>never <em>trigger.</em></h1>
-  <p>skill-router wraps poorly-described skills in a router with a proper WHAT + WHEN + NOT-WHEN description — so your agent actually knows when to use them.</p>
-  <div class="hero-ctas">
-    <a href="#start" class="btn btn-primary">Get Started →</a>
-    <a href="https://github.com/chrishan17/skill-router" class="btn btn-secondary" target="_blank">View on GitHub</a>
+<header>
+  <div class="hero-inner">
+    <span class="hero-tag">v1.0.0 · MIT · Python 3.9+</span>
+    <div class="hero">
+      <h1>Skills you<br>installed but<br>never <em>trigger.</em></h1>
+      <p>skill-router wraps poorly-described skills in a router with a proper WHAT + WHEN + NOT-WHEN description — so your agent actually knows when to use them.</p>
+      <div class="hero-ctas">
+        <a href="#start" class="btn btn-primary">Get Started →</a>
+        <a href="https://github.com/chrishan17/skill-router" class="btn btn-secondary" target="_blank" rel="noopener">View on GitHub</a>
+      </div>
+    </div>
   </div>
-</div>
+</header>
 
 <!-- STATS -->
-<div class="stats">
-  <div class="stat">
-    <div class="stat-num"><span>40+</span></div>
-    <div class="stat-label">Supported agents</div>
+<section aria-label="Key stats">
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num"><span>40+</span></div>
+      <div class="stat-label">Supported agents</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num"><span>3</span></div>
+      <div class="stat-label">Parts every good<br>description needs</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num"><span>0</span></div>
+      <div class="stat-label">Original skills<br>modified</div>
+    </div>
   </div>
-  <div class="stat">
-    <div class="stat-num"><span>3</span></div>
-    <div class="stat-label">Parts every good<br>description needs</div>
-  </div>
-  <div class="stat">
-    <div class="stat-num"><span>0</span></div>
-    <div class="stat-label">Original skills<br>modified</div>
-  </div>
-</div>
+</section>
 
 <!-- PROBLEM -->
 <section class="problem">
@@ -443,45 +537,45 @@ description: &gt;
 <span class="dim">use for writing new components.</span></pre>
       </div>
     </div>
-    <p style="font-family:var(--mono);font-size:0.8rem;font-weight:400;line-height:1.6;margin-top:2rem;max-width:600px;color:#555;">
+    <p class="how-note">
       The router synthesizes a WHAT + WHEN + NOT-WHEN description from the sub-skills' actual content. When triggered, it dispatches to the right original skill. Originals are never modified.
     </p>
   </div>
 </section>
 
 <!-- WORKFLOW -->
-<section>
+<section id="workflow">
   <div class="section-inner">
     <span class="section-label">Workflow</span>
     <h2 class="section-title">Six steps.<br>Done.</h2>
     <div class="workflow-steps">
       <div class="step">
-        <span class="step-num">1</span>
+        <span class="step-num" aria-hidden="true">1</span>
         <h3>Detect</h3>
         <p>Auto-detects which AI agent tool directories exist in the current project.</p>
       </div>
       <div class="step">
-        <span class="step-num">2</span>
+        <span class="step-num" aria-hidden="true">2</span>
         <h3>Determine</h3>
         <p>Identifies which skills to group — user-specified or auto-suggested by collection.</p>
       </div>
       <div class="step">
-        <span class="step-num">3</span>
+        <span class="step-num" aria-hidden="true">3</span>
         <h3>Synthesize</h3>
         <p>Reads sub-skill descriptions and writes a unified router description (WHAT + WHEN + NOT-WHEN).</p>
       </div>
       <div class="step">
-        <span class="step-num">4</span>
+        <span class="step-num" aria-hidden="true">4</span>
         <h3>Preview</h3>
         <p>Dry-run generates the full SKILL.md for review before any files are written.</p>
       </div>
       <div class="step">
-        <span class="step-num">5</span>
+        <span class="step-num" aria-hidden="true">5</span>
         <h3>Create</h3>
         <p>Writes the router skill directory with SKILL.md and _manifest.json. Originals untouched.</p>
       </div>
       <div class="step">
-        <span class="step-num">6</span>
+        <span class="step-num" aria-hidden="true">6</span>
         <h3>Explain</h3>
         <p>Tells you how to invoke the router (/router-name) and sub-skills directly (/skill-name).</p>
       </div>
@@ -496,53 +590,53 @@ description: &gt;
     <h2 class="section-title">Works with<br>40+ agents.</h2>
 
     <div class="agents-subhead">Universal agents (share .agents/skills/)</div>
-    <div class="agents-grid">
-      <div class="agent-chip">amp</div>
-      <div class="agent-chip">antigravity</div>
-      <div class="agent-chip">cline</div>
-      <div class="agent-chip">codex</div>
-      <div class="agent-chip">cursor</div>
-      <div class="agent-chip">deep agents</div>
-      <div class="agent-chip">gemini cli</div>
-      <div class="agent-chip">github copilot</div>
-      <div class="agent-chip">kimi cli</div>
-      <div class="agent-chip">opencode</div>
-      <div class="agent-chip">replit</div>
-      <div class="agent-chip">warp</div>
+    <div class="agents-grid" role="list" aria-label="Universal agents">
+      <div class="agent-chip" role="listitem">amp</div>
+      <div class="agent-chip" role="listitem">antigravity</div>
+      <div class="agent-chip" role="listitem">cline</div>
+      <div class="agent-chip" role="listitem">codex</div>
+      <div class="agent-chip" role="listitem">cursor</div>
+      <div class="agent-chip" role="listitem">deep agents</div>
+      <div class="agent-chip" role="listitem">gemini cli</div>
+      <div class="agent-chip" role="listitem">github copilot</div>
+      <div class="agent-chip" role="listitem">kimi cli</div>
+      <div class="agent-chip" role="listitem">opencode</div>
+      <div class="agent-chip" role="listitem">replit</div>
+      <div class="agent-chip" role="listitem">warp</div>
     </div>
 
     <div class="agents-subhead">Non-universal agents (dedicated directories)</div>
-    <div class="agents-grid">
-      <div class="agent-chip">adal</div>
-      <div class="agent-chip">augment</div>
-      <div class="agent-chip">claude code</div>
-      <div class="agent-chip">codebuddy</div>
-      <div class="agent-chip">command code</div>
-      <div class="agent-chip">continue</div>
-      <div class="agent-chip">cortex</div>
-      <div class="agent-chip">crush</div>
-      <div class="agent-chip">droid</div>
-      <div class="agent-chip">goose</div>
-      <div class="agent-chip">iflow cli</div>
-      <div class="agent-chip">junie</div>
-      <div class="agent-chip">kilo code</div>
-      <div class="agent-chip">kiro cli</div>
-      <div class="agent-chip">kode</div>
-      <div class="agent-chip">mcpjam</div>
-      <div class="agent-chip">mistral vibe</div>
-      <div class="agent-chip">mux</div>
-      <div class="agent-chip">neovate</div>
-      <div class="agent-chip">openclaw</div>
-      <div class="agent-chip">openhands</div>
-      <div class="agent-chip">pi</div>
-      <div class="agent-chip">pochi</div>
-      <div class="agent-chip">qoder</div>
-      <div class="agent-chip">qwen code</div>
-      <div class="agent-chip">roo code</div>
-      <div class="agent-chip">trae</div>
-      <div class="agent-chip">trae cn</div>
-      <div class="agent-chip">windsurf</div>
-      <div class="agent-chip">zencoder</div>
+    <div class="agents-grid" role="list" aria-label="Non-universal agents">
+      <div class="agent-chip" role="listitem">adal</div>
+      <div class="agent-chip" role="listitem">augment</div>
+      <div class="agent-chip" role="listitem">claude code</div>
+      <div class="agent-chip" role="listitem">codebuddy</div>
+      <div class="agent-chip" role="listitem">command code</div>
+      <div class="agent-chip" role="listitem">continue</div>
+      <div class="agent-chip" role="listitem">cortex</div>
+      <div class="agent-chip" role="listitem">crush</div>
+      <div class="agent-chip" role="listitem">droid</div>
+      <div class="agent-chip" role="listitem">goose</div>
+      <div class="agent-chip" role="listitem">iflow cli</div>
+      <div class="agent-chip" role="listitem">junie</div>
+      <div class="agent-chip" role="listitem">kilo code</div>
+      <div class="agent-chip" role="listitem">kiro cli</div>
+      <div class="agent-chip" role="listitem">kode</div>
+      <div class="agent-chip" role="listitem">mcpjam</div>
+      <div class="agent-chip" role="listitem">mistral vibe</div>
+      <div class="agent-chip" role="listitem">mux</div>
+      <div class="agent-chip" role="listitem">neovate</div>
+      <div class="agent-chip" role="listitem">openclaw</div>
+      <div class="agent-chip" role="listitem">openhands</div>
+      <div class="agent-chip" role="listitem">pi</div>
+      <div class="agent-chip" role="listitem">pochi</div>
+      <div class="agent-chip" role="listitem">qoder</div>
+      <div class="agent-chip" role="listitem">qwen code</div>
+      <div class="agent-chip" role="listitem">roo code</div>
+      <div class="agent-chip" role="listitem">trae</div>
+      <div class="agent-chip" role="listitem">trae cn</div>
+      <div class="agent-chip" role="listitem">windsurf</div>
+      <div class="agent-chip" role="listitem">zencoder</div>
     </div>
   </div>
 </section>
@@ -552,7 +646,7 @@ description: &gt;
   <div class="section-inner">
     <span class="section-label">Get Started</span>
     <h2 class="section-title">Install in<br>one copy.</h2>
-    <div class="install-box">
+    <div class="install-box" role="region" aria-label="Installation commands">
       <span class="comment"># Claude Code (local project)</span><br>
       <span class="cmd">cp -r skills/skill-router/ .claude/skills/skill-router/</span><br><br>
       <span class="comment"># Any universal agent</span><br>
@@ -560,11 +654,13 @@ description: &gt;
       <span class="comment"># Then tell your agent:</span><br>
       <span class="cmd">/skill-router</span>
     </div>
-    <a href="https://github.com/chrishan17/skill-router" class="btn btn-primary" target="_blank">
+    <a href="https://github.com/chrishan17/skill-router" class="btn btn-primary" target="_blank" rel="noopener">
       View Full Docs on GitHub →
     </a>
   </div>
 </section>
+
+</main>
 
 <!-- FOOTER -->
 <footer>
