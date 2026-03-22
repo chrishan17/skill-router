@@ -1,0 +1,16 @@
+# Dev workspace files
+press-release.md
+skills-lock.json
+
+# Installed skills workspace (not part of the skill itself)
+.claude/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.ruff_cache/
+
+# macOS
+.DS_Store

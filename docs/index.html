@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>skill-router — Stop Drowning In Skills</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black: #0a0a0a;
+      --white: #FAFAF8;
+      --yellow: #FFE600;
+      --border: 3px solid #0a0a0a;
+      --font: 'Arial Black', 'Helvetica Neue', Arial, sans-serif;
+      --mono: 'Courier New', Courier, monospace;
+    }
+
+    body {
+      background: var(--white);
+      color: var(--black);
+      font-family: var(--font);
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    /* ── NAV ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      height: 64px;
+      border-bottom: var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--white);
+      z-index: 100;
+    }
+    .nav-logo {
+      font-size: 1.1rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: var(--black);
+    }
+    .nav-logo span {
+      background: var(--yellow);
+      padding: 2px 6px;
+      margin-right: 4px;
+    }
+    .nav-links { display: flex; gap: 0; }
+    .nav-links a {
+      display: block;
+      padding: 0 1.25rem;
+      height: 64px;
+      line-height: 64px;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: var(--black);
+      border-left: var(--border);
+    }
+    .nav-links a:hover { background: var(--yellow); }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 5rem 2rem 4rem;
+      border-bottom: var(--border);
+      max-width: 900px;
+    }
+    .hero-tag {
+      display: inline-block;
+      border: var(--border);
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      margin-bottom: 2rem;
+    }
+    .hero h1 {
+      font-size: clamp(3rem, 9vw, 7rem);
+      text-transform: uppercase;
+      line-height: 0.95;
+      letter-spacing: -0.02em;
+      margin-bottom: 2rem;
+    }
+    .hero h1 em {
+      font-style: normal;
+      background: var(--yellow);
+      padding: 0 8px;
+    }
+    .hero p {
+      font-family: var(--mono);
+      font-size: 1rem;
+      font-weight: 400;
+      line-height: 1.6;
+      max-width: 580px;
+      margin-bottom: 2.5rem;
+    }
+    .hero-ctas { display: flex; gap: 0; flex-wrap: wrap; }
+    .btn {
+      display: inline-block;
+      padding: 1rem 2rem;
+      border: var(--border);
+      font-family: var(--font);
+      font-size: 0.85rem;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .btn-primary { background: var(--yellow); color: var(--black); }
+    .btn-primary:hover { background: var(--black); color: var(--yellow); }
+    .btn-secondary { background: var(--white); color: var(--black); margin-left: -3px; }
+    .btn-secondary:hover { background: var(--black); color: var(--white); }
+
+    /* ── STATS ── */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-bottom: var(--border);
+    }
+    .stat {
+      padding: 2.5rem 2rem;
+      border-right: var(--border);
+    }
+    .stat:last-child { border-right: none; }
+    .stat-num {
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+    .stat-num span { background: var(--yellow); padding: 0 4px; }
+    .stat-label {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      font-weight: 400;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* ── SECTION ── */
+    section {
+      border-bottom: var(--border);
+    }
+    .section-inner {
+      max-width: 1200px;
+      padding: 4rem 2rem;
+    }
+    .section-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      border: var(--border);
+      display: inline-block;
+      padding: 4px 8px;
+      margin-bottom: 2rem;
+    }
+    .section-title {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      text-transform: uppercase;
+      line-height: 1;
+      letter-spacing: -0.01em;
+      margin-bottom: 2rem;
+    }
+
+    /* ── PROBLEM (dark) ── */
+    .problem {
+      background: var(--black);
+      color: var(--white);
+      border-bottom: var(--border);
+    }
+    .problem .section-label { border-color: var(--white); }
+    .problem .section-title { color: var(--white); }
+    .problem-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 0;
+    }
+    .problem-item {
+      border: 2px solid #333;
+      padding: 2rem;
+      margin: -1px;
+    }
+    .problem-item:hover { border-color: var(--yellow); }
+    .problem-num {
+      font-size: 3rem;
+      color: var(--yellow);
+      display: block;
+      margin-bottom: 1rem;
+    }
+    .problem-item h3 {
+      font-size: 1rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+    .problem-item p {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      font-weight: 400;
+      line-height: 1.6;
+      color: #bbb;
+    }
+
+    /* ── HOW IT WORKS ── */
+    .how-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+    }
+    @media (max-width: 768px) { .how-grid { grid-template-columns: 1fr; } }
+    .how-col {
+      padding: 2rem;
+      border: var(--border);
+      margin: -1px;
+    }
+    .how-col-title {
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid var(--black);
+    }
+    .how-col pre {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      font-weight: 400;
+      line-height: 1.8;
+      white-space: pre;
+      overflow-x: auto;
+    }
+    .how-col pre .hl { background: var(--yellow); padding: 0 2px; }
+    .how-col pre .dim { color: #888; }
+
+    /* ── WORKFLOW ── */
+    .workflow-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 0;
+    }
+    .step {
+      border: var(--border);
+      padding: 2rem;
+      margin: -1px;
+      position: relative;
+    }
+    .step:hover { background: var(--yellow); }
+    .step-num {
+      font-size: 4rem;
+      line-height: 1;
+      color: #ddd;
+      position: absolute;
+      top: 1rem;
+      right: 1.5rem;
+    }
+    .step h3 {
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+    }
+    .step p {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      font-weight: 400;
+      line-height: 1.6;
+      color: #444;
+    }
+    .step:hover p { color: var(--black); }
+    .step:hover .step-num { color: #aaa; }
+
+    /* ── AGENTS ── */
+    .agents-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0;
+    }
+    .agent-chip {
+      border: var(--border);
+      padding: 0.5rem 1rem;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      font-weight: 400;
+      text-transform: lowercase;
+      margin: -1px;
+      white-space: nowrap;
+    }
+    .agent-chip:hover { background: var(--yellow); font-weight: 700; cursor: default; }
+    .agents-subhead {
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin: 2rem 0 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--black);
+    }
+
+    /* ── GET STARTED ── */
+    .install-box {
+      border: var(--border);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      background: var(--black);
+      color: var(--yellow);
+      font-family: var(--mono);
+      font-size: 0.9rem;
+      font-weight: 400;
+      line-height: 2;
+    }
+    .install-box .comment { color: #555; }
+    .install-box .cmd { color: var(--white); }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      border-top: var(--border);
+    }
+    footer p {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      font-weight: 400;
+      letter-spacing: 0.05em;
+    }
+    footer a {
+      color: var(--black);
+      text-decoration: none;
+      border-bottom: 2px solid var(--black);
+    }
+    footer a:hover { background: var(--yellow); }
+
+    @media (max-width: 600px) {
+      .stats { grid-template-columns: 1fr; }
+      .stat { border-right: none; border-bottom: var(--border); }
+      .how-col pre { font-size: 0.65rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#">
+    <span>SR</span>SKILL-ROUTER
+  </a>
+  <div class="nav-links">
+    <a href="#how">How It Works</a>
+    <a href="#agents">Agents</a>
+    <a href="https://github.com/chrishan17/skill-router" target="_blank">GitHub ↗</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <span class="hero-tag">v1.0.0 · MIT · Python 3.9+</span>
+  <h1>Stop <em>drowning</em><br>in skills.</h1>
+  <p>skill-router organises your AI agent skills into single-entry-point routers — cutting context bloat, eliminating routing conflicts, and keeping all your originals intact.</p>
+  <div class="hero-ctas">
+    <a href="#start" class="btn btn-primary">Get Started →</a>
+    <a href="https://github.com/chrishan17/skill-router" class="btn btn-secondary" target="_blank">View on GitHub</a>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat">
+    <div class="stat-num"><span>40+</span></div>
+    <div class="stat-label">Supported agents</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num"><span>1</span></div>
+    <div class="stat-label">Description in context<br>instead of N</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num"><span>0</span></div>
+    <div class="stat-label">Original skills<br>modified</div>
+  </div>
+</div>
+
+<!-- PROBLEM -->
+<section class="problem">
+  <div class="section-inner">
+    <span class="section-label">The Problem</span>
+    <h2 class="section-title">More skills,<br>worse results.</h2>
+    <div class="problem-grid">
+      <div class="problem-item">
+        <span class="problem-num">01.</span>
+        <h3>Context Window Bloat</h3>
+        <p>Every installed skill's description loads into context on every turn — whether it's relevant or not. With 30+ skills, this consumes thousands of tokens and dilutes the model's attention across the board.</p>
+      </div>
+      <div class="problem-item">
+        <span class="problem-num">02.</span>
+        <h3>Routing Conflicts</h3>
+        <p>Similar skill descriptions cause the agent to invoke the wrong skill. An animation skill fires when you need a polish skill. A Python skill triggers on Go code. Users just notice their agent "feels dumber."</p>
+      </div>
+      <div class="problem-item">
+        <span class="problem-num">03.</span>
+        <h3>No Management Layer</h3>
+        <p>There's no npm ls for skills — no unified view of what's installed, what's stale, or what's overlapping. When skills conflict, there's no tool to diagnose why.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="section-inner">
+    <span class="section-label">How It Works</span>
+    <h2 class="section-title">N skills → 1 router.<br>Originals stay put.</h2>
+    <div class="how-grid">
+      <div class="how-col">
+        <div class="how-col-title">Before — 6 descriptions in context</div>
+        <pre><span class="dim">.claude/skills/</span>
+  animate/
+  polish/
+  critique/
+  adapt/
+  bolder/
+  colorize/
+<span class="dim">  ↑ all 6 descriptions loaded</span>
+<span class="dim">    on every agent turn</span></pre>
+      </div>
+      <div class="how-col">
+        <div class="how-col-title">After — 1 description in context</div>
+        <pre><span class="dim">.claude/skills/</span>
+  animate/       <span class="dim">← untouched</span>
+  polish/        <span class="dim">← untouched</span>
+  critique/      <span class="dim">← untouched</span>
+  adapt/         <span class="dim">← untouched</span>
+  bolder/        <span class="dim">← untouched</span>
+  colorize/      <span class="dim">← untouched</span>
+  <span class="hl">ui-design/</span>     <span class="dim">← router</span>
+    SKILL.md     <span class="dim">← 1 description</span>
+    _manifest.json</pre>
+      </div>
+    </div>
+    <p style="font-family:var(--mono);font-size:0.8rem;font-weight:400;line-height:1.6;margin-top:2rem;max-width:600px;color:#555;">
+      The router's SKILL.md contains a synthesised description covering all sub-skills, a dispatch table pointing to each original, and a capabilities section. When triggered, the agent reads only the one relevant original — not all of them.
+    </p>
+  </div>
+</section>
+
+<!-- WORKFLOW -->
+<section>
+  <div class="section-inner">
+    <span class="section-label">Workflow</span>
+    <h2 class="section-title">Six steps.<br>Done.</h2>
+    <div class="workflow-steps">
+      <div class="step">
+        <span class="step-num">1</span>
+        <h3>Detect</h3>
+        <p>Auto-detects which AI agent tool directories exist in the current project.</p>
+      </div>
+      <div class="step">
+        <span class="step-num">2</span>
+        <h3>Determine</h3>
+        <p>Identifies which skills to group — user-specified or auto-suggested by collection.</p>
+      </div>
+      <div class="step">
+        <span class="step-num">3</span>
+        <h3>Synthesize</h3>
+        <p>Reads sub-skill descriptions and writes a unified router description (WHAT + WHEN + NOT-WHEN).</p>
+      </div>
+      <div class="step">
+        <span class="step-num">4</span>
+        <h3>Preview</h3>
+        <p>Dry-run generates the full SKILL.md for review before any files are written.</p>
+      </div>
+      <div class="step">
+        <span class="step-num">5</span>
+        <h3>Create</h3>
+        <p>Writes the router skill directory with SKILL.md and _manifest.json. Originals untouched.</p>
+      </div>
+      <div class="step">
+        <span class="step-num">6</span>
+        <h3>Explain</h3>
+        <p>Tells you how to invoke the router (/router-name) and sub-skills directly (/skill-name).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AGENTS -->
+<section id="agents">
+  <div class="section-inner">
+    <span class="section-label">Supported Agents</span>
+    <h2 class="section-title">Works with<br>40+ agents.</h2>
+
+    <div class="agents-subhead">Universal agents (share .agents/skills/)</div>
+    <div class="agents-grid">
+      <div class="agent-chip">amp</div>
+      <div class="agent-chip">antigravity</div>
+      <div class="agent-chip">cline</div>
+      <div class="agent-chip">codex</div>
+      <div class="agent-chip">cursor</div>
+      <div class="agent-chip">deep agents</div>
+      <div class="agent-chip">gemini cli</div>
+      <div class="agent-chip">github copilot</div>
+      <div class="agent-chip">kimi cli</div>
+      <div class="agent-chip">opencode</div>
+      <div class="agent-chip">replit</div>
+      <div class="agent-chip">warp</div>
+    </div>
+
+    <div class="agents-subhead">Non-universal agents (dedicated directories)</div>
+    <div class="agents-grid">
+      <div class="agent-chip">adal</div>
+      <div class="agent-chip">augment</div>
+      <div class="agent-chip">claude code</div>
+      <div class="agent-chip">codebuddy</div>
+      <div class="agent-chip">command code</div>
+      <div class="agent-chip">continue</div>
+      <div class="agent-chip">cortex</div>
+      <div class="agent-chip">crush</div>
+      <div class="agent-chip">droid</div>
+      <div class="agent-chip">goose</div>
+      <div class="agent-chip">iflow cli</div>
+      <div class="agent-chip">junie</div>
+      <div class="agent-chip">kilo code</div>
+      <div class="agent-chip">kiro cli</div>
+      <div class="agent-chip">kode</div>
+      <div class="agent-chip">mcpjam</div>
+      <div class="agent-chip">mistral vibe</div>
+      <div class="agent-chip">mux</div>
+      <div class="agent-chip">neovate</div>
+      <div class="agent-chip">openclaw</div>
+      <div class="agent-chip">openhands</div>
+      <div class="agent-chip">pi</div>
+      <div class="agent-chip">pochi</div>
+      <div class="agent-chip">qoder</div>
+      <div class="agent-chip">qwen code</div>
+      <div class="agent-chip">roo code</div>
+      <div class="agent-chip">trae</div>
+      <div class="agent-chip">trae cn</div>
+      <div class="agent-chip">windsurf</div>
+      <div class="agent-chip">zencoder</div>
+    </div>
+  </div>
+</section>
+
+<!-- GET STARTED -->
+<section id="start">
+  <div class="section-inner">
+    <span class="section-label">Get Started</span>
+    <h2 class="section-title">Install in<br>one copy.</h2>
+    <div class="install-box">
+      <span class="comment"># Claude Code (local project)</span><br>
+      <span class="cmd">cp -r skills/skill-router/ .claude/skills/skill-router/</span><br><br>
+      <span class="comment"># Any universal agent</span><br>
+      <span class="cmd">cp -r skills/skill-router/ .agents/skills/skill-router/</span><br><br>
+      <span class="comment"># Then tell your agent:</span><br>
+      <span class="cmd">/skill-router</span>
+    </div>
+    <a href="https://github.com/chrishan17/skill-router" class="btn btn-primary" target="_blank">
+      View Full Docs on GitHub →
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>skill-router · v1.0.0 · <a href="https://github.com/chrishan17/skill-router/blob/main/LICENSE">MIT License</a></p>
+  <p><a href="https://github.com/chrishan17/skill-router">github.com/chrishan17/skill-router</a></p>
+</footer>
+
+</body>
+</html>
