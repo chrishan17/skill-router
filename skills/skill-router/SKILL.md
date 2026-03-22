@@ -10,7 +10,7 @@ description: >
   or general code review unrelated to skill organisation.
 metadata:
   author: chrishan
-  version: 1.0.0
+  version: 1.0.1
   category: skill-management
   tags: "skills, router, merge, organize, group, multi-tool"
 ---

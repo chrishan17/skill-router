@@ -1,6 +1,6 @@
 # skill-router
 
-[![Version](https://img.shields.io/badge/version-1.0.0-black?style=flat-square)](skills/skill-router/SKILL.md)
+[![Version](https://img.shields.io/badge/version-1.0.1-black?style=flat-square)](skills/skill-router/SKILL.md)
 [![Python](https://img.shields.io/badge/python-3.9%2B-black?style=flat-square)](skills/skill-router/scripts/)
 [![License](https://img.shields.io/badge/license-MIT-black?style=flat-square)](LICENSE)
 [![Agents](https://img.shields.io/badge/agents-40%2B-yellow?style=flat-square)](skills/skill-router/references/supported-agents.md)
@@ -52,17 +52,8 @@ The router's `SKILL.md` contains:
 
 ## Installation
 
-Copy the `skills/skill-router/` folder into your agent's skills directory:
-
 ```bash
-# Claude Code (local project)
-cp -r skills/skill-router/ .claude/skills/skill-router/
-
-# Claude Code (global)
-cp -r skills/skill-router/ ~/.claude/skills/skill-router/
-
-# Any universal agent (.agents/skills)
-cp -r skills/skill-router/ .agents/skills/skill-router/
+npx skills install chrishan17/skill-router
 ```
 
 Then tell your agent: `/skill-router` or `run skill-router`.
