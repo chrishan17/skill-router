@@ -20,7 +20,7 @@ The result: you install a skill and your agent never uses it — not because the
 
 ### Skills eat your context window
 
-Every installed skill loads its description into the agent's context window at startup — before your first message. Install 20–30 skills and you've burned thousands of tokens on overhead before any real work begins. That's context you can't use for code, documents, or conversation.
+Every installed skill loads its description into the agent's context window at startup — before your first message. It's common to have 100+ skills installed. Every one of them loads its description at startup — burning tens of thousands of tokens on overhead before any real work begins. That's context you can't use for code, documents, or conversation.
 
 **skill-router** addresses both problems at once.
 
@@ -59,13 +59,13 @@ The router's `SKILL.md` contains:
 When skill-router creates a router, it automatically sets `disable-model-invocation: true` on every sub-skill. This tells the agent not to load those descriptions into context. Only the single router description loads at startup:
 
 ```
-# Before — 21 skills in context
+# Before — 100+ skills in context
 animate      (~300 tokens)
 polish       (~280 tokens)
 critique     (~260 tokens)
-... 18 more ...
+... 97+ more ...
 ──────────────────────────────
-Total overhead: ~6,000+ tokens
+Total overhead: tens of thousands of tokens
 
 # After — 1 router in context
 ui-design    (~400 tokens)   ← only this loads
