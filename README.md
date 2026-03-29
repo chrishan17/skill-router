@@ -20,7 +20,7 @@ The result: you install a skill and your agent never uses it — not because the
 
 ### Skills eat your context window
 
-Every installed skill loads its description into the agent's context window at startup — before your first message. It's common to have 100+ skills installed. Every one of them loads its description at startup — burning tens of thousands of tokens on overhead before any real work begins. That's context you can't use for code, documents, or conversation.
+Every installed skill loads its description into the agent's context window at startup — before your first message. It's common to have 100+ skills installed — and that number only grows. Every new install quietly adds more tokens to your startup overhead. Without grouping, skills compound: each one burns a little more context, a little less is left for your actual work, and the problem gets worse with every `npx skills install` you run.
 
 **skill-router** addresses both problems at once.
 

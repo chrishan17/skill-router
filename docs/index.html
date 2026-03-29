@@ -699,7 +699,7 @@
       <div class="problem-item">
         <span class="problem-num">04.</span>
         <h3>Context Window Bloat</h3>
-        <p>It's common to have 100+ skills installed. Every one loads its description into context at startup — burning tens of thousands of tokens before the first message. That's context you can't use for your actual work.</p>
+        <p>It's common to have 100+ skills installed — and that number only grows. Without grouping, skills compound: each new install quietly burns more context at startup, leaving less room for your actual work. The problem gets worse with every install.</p>
       </div>
     </div>
   </div>
@@ -749,7 +749,7 @@ description: &gt;
     <span class="section-label reveal">Context Overhead</span>
     <h2 class="section-title reveal">N skills.<br>One entry.</h2>
     <p class="how-note reveal" style="margin-bottom: 2.5rem; font-size: 0.9rem; color: var(--gray-70);">
-      It's common to have 100+ skills installed. Every one loads its description into the agent's context window at startup — before your first message. skill-router suppresses sub-skill descriptions automatically, so only the router's single entry loads. Same capabilities. A fraction of the overhead.
+      Skills compound. Every new install quietly adds more tokens to your startup overhead — and without grouping, it only gets worse. skill-router suppresses sub-skill descriptions automatically, so only the router's single entry loads into context. Same capabilities. A fraction of the overhead.
     </p>
     <div class="context-compare reveal">
       <!-- BEFORE -->
