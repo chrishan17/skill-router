@@ -145,7 +145,7 @@ skill-router auto-detects which agents are installed by checking their known ski
 | Continue | `.continue/skills` | `~/.continue/skills` |
 | Cortex Code | `.cortex/skills` | `~/.snowflake/cortex/skills` |
 | Goose | `.goose/skills` | `$XDG_CONFIG_HOME/goose/skills` |
-| OpenClaw | `skills/` | `~/.openclaw/skills` |
+| OpenClaw | `skills/` ¹ | `~/.openclaw/skills` |
 | OpenHands | `.openhands/skills` | `~/.openhands/skills` |
 | Qwen Code | `.qwen/skills` | `~/.qwen/skills` |
 | Roo Code | `.roo/skills` | `~/.roo/skills` |
@@ -153,6 +153,8 @@ skill-router auto-detects which agents are installed by checking their known ski
 | Zencoder | `.zencoder/skills` | `~/.zencoder/skills` |
 
 And [many more](skills/skill-router/references/supported-agents.md) — 40+ agents total.
+
+> ¹ OpenClaw's `skills/` directory is a generic name shared by many projects. skill-router only detects OpenClaw when a `.openclaw/` directory is also present in the project root, to avoid false positives.
 
 ---
 

@@ -53,6 +53,7 @@
       font-family: var(--font-sans);
       font-weight: 400;
       line-height: 1.5;
+      overflow-x: hidden;
     }
 
     /* ── FOCUS ── */
@@ -82,6 +83,7 @@
       text-transform: uppercase;
       text-decoration: none;
       color: var(--black);
+      flex-shrink: 0;
     }
     .nav-logo span {
       background: var(--yellow);
@@ -103,8 +105,62 @@
       color: var(--black);
       border-left: var(--border);
       transition: background var(--transition), color var(--transition);
+      white-space: nowrap;
     }
     .nav-links a:hover { background: var(--yellow); }
+
+    /* ── HERO ENTRANCE ANIMATIONS ── */
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(28px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    .hero-tag  { animation: fadeSlideUp 0.5s ease 0.05s both; }
+    .hero h1   { animation: fadeSlideUp 0.65s ease 0.18s both; }
+    .hero p    { animation: fadeSlideUp 0.5s ease 0.38s both; }
+    .hero-ctas { animation: fadeSlideUp 0.5s ease 0.52s both; }
+
+    /* ── SCROLL ANIMATION BASE ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.55s ease, transform 0.55s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    /* stagger delays for children */
+    .stagger > *:nth-child(1) { transition-delay: 0.00s; }
+    .stagger > *:nth-child(2) { transition-delay: 0.08s; }
+    .stagger > *:nth-child(3) { transition-delay: 0.16s; }
+    .stagger > *:nth-child(4) { transition-delay: 0.24s; }
+    .stagger > *:nth-child(5) { transition-delay: 0.32s; }
+    .stagger > *:nth-child(6) { transition-delay: 0.40s; }
+    /* chips get a quicker, lighter stagger */
+    .stagger-chips > * {
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .stagger-chips.visible > * { opacity: 1; transform: translateY(0); }
+    .stagger-chips.visible > *:nth-child(1)  { transition-delay: 0.00s; }
+    .stagger-chips.visible > *:nth-child(2)  { transition-delay: 0.03s; }
+    .stagger-chips.visible > *:nth-child(3)  { transition-delay: 0.06s; }
+    .stagger-chips.visible > *:nth-child(4)  { transition-delay: 0.09s; }
+    .stagger-chips.visible > *:nth-child(5)  { transition-delay: 0.12s; }
+    .stagger-chips.visible > *:nth-child(6)  { transition-delay: 0.15s; }
+    .stagger-chips.visible > *:nth-child(7)  { transition-delay: 0.18s; }
+    .stagger-chips.visible > *:nth-child(8)  { transition-delay: 0.21s; }
+    .stagger-chips.visible > *:nth-child(9)  { transition-delay: 0.24s; }
+    .stagger-chips.visible > *:nth-child(10) { transition-delay: 0.27s; }
+    .stagger-chips.visible > *:nth-child(11) { transition-delay: 0.30s; }
+    .stagger-chips.visible > *:nth-child(12) { transition-delay: 0.33s; }
+    .stagger-chips.visible > *:nth-child(n+13) { transition-delay: 0.36s; }
 
     /* ── HERO ── */
     header {
@@ -127,7 +183,7 @@
     }
     .hero h1 {
       font-family: var(--font-display);
-      font-size: clamp(4rem, 11vw, 8.5rem);
+      font-size: clamp(3rem, 11vw, 8.5rem);
       text-transform: uppercase;
       line-height: 0.95;
       letter-spacing: 0.01em;
@@ -146,7 +202,7 @@
       margin-bottom: 2.5rem;
       color: var(--gray-90);
     }
-    .hero-ctas { display: flex; flex-wrap: wrap; }
+    .hero-ctas { display: flex; flex-wrap: wrap; gap: 0; }
     .btn {
       display: inline-block;
       padding: 1rem 2rem;
@@ -228,16 +284,28 @@
     .problem .section-title { color: var(--white); }
     .problem-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     }
     .problem-item {
       border: var(--border-dim);
       padding: 2rem;
       margin: -1px;
       position: relative;
+      overflow: hidden;
       transition: border-color var(--transition);
     }
+    .problem-item::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--yellow);
+      transform: translateY(100%);
+      transition: transform 0.3s ease;
+      z-index: 0;
+    }
+    .problem-item:hover::before { transform: translateY(0); }
     .problem-item:hover { border-color: var(--yellow); z-index: 1; }
+    .problem-item > * { position: relative; z-index: 1; }
     .problem-num {
       font-family: var(--font-display);
       font-size: 3.5rem;
@@ -245,7 +313,9 @@
       display: block;
       margin-bottom: 1rem;
       line-height: 1;
+      transition: color var(--transition);
     }
+    .problem-item:hover .problem-num { color: var(--black); }
     .problem-item h3 {
       font-family: var(--font-sans);
       font-size: 0.9rem;
@@ -253,13 +323,17 @@
       letter-spacing: 0.06em;
       text-transform: uppercase;
       margin-bottom: 0.75rem;
+      transition: color var(--transition);
     }
+    .problem-item:hover h3 { color: var(--black); }
     .problem-item p {
       font-family: var(--font-mono);
       font-size: 0.8rem;
       line-height: 1.7;
       color: var(--gray-30);
+      transition: color var(--transition);
     }
+    .problem-item:hover p { color: var(--black); }
 
     /* ── HOW IT WORKS ── */
     #how { border-bottom: var(--border); }
@@ -306,7 +380,7 @@
     #workflow { border-bottom: var(--border); }
     .workflow-steps {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     }
     .step {
       border: var(--border);
@@ -415,20 +489,43 @@
     /* ── RESPONSIVE ── */
     @media (max-width: 768px) {
       .how-grid { grid-template-columns: 1fr; }
+      .nav-links .nav-anchor { display: none; }
     }
     @media (max-width: 600px) {
+      nav { padding: 0 1rem; }
+      .nav-links a { padding: 0 1rem; font-size: 0.7rem; }
+
+      .hero-inner { padding: 2.5rem 1rem 2rem; }
+      .hero p { font-size: 0.9rem; }
+      .hero-ctas { flex-direction: column; }
+      .btn-secondary { margin-left: 0; margin-top: -3px; }
+
       .stats { grid-template-columns: 1fr; }
       .stat { border-right: none; border-bottom: var(--border); }
       .stat:last-child { border-bottom: none; }
+
+      .section-inner { padding: 3rem 1rem; }
+      .how-col { padding: 1.5rem 1rem; }
       .how-col pre { font-size: 0.68rem; }
-      nav { padding: 0 1rem; }
-      .hero-inner { padding: 3rem 1rem 2.5rem; }
+
+      .step { padding: 1.5rem 1rem; }
+      .step-num { font-size: 3.5rem; top: 0.75rem; right: 1rem; }
+
+      .install-box { padding: 1.5rem 1rem; font-size: 0.8rem; }
+    }
+    @media (max-width: 400px) {
+      .hero h1 { font-size: clamp(2.5rem, 13vw, 3.5rem); }
     }
 
     /* ── REDUCED MOTION ── */
     @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { transition-duration: 0ms !important; }
+      *, *::before, *::after {
+        transition-duration: 0ms !important;
+        animation-duration: 0ms !important;
+        animation-delay: 0ms !important;
+      }
       html { scroll-behavior: auto; }
+      .reveal, .stagger-chips > * { opacity: 1; transform: none; }
     }
   </style>
 </head>
@@ -440,8 +537,8 @@
     <span>SR</span>SKILL-ROUTER
   </a>
   <div class="nav-links">
-    <a href="#how">How It Works</a>
-    <a href="#agents">Agents</a>
+    <a class="nav-anchor" href="#how">How It Works</a>
+    <a class="nav-anchor" href="#agents">Agents</a>
     <a href="https://github.com/chrishan17/skill-router" target="_blank" rel="noopener">GitHub ↗</a>
   </div>
 </nav>
@@ -465,17 +562,17 @@
 
 <!-- STATS -->
 <section aria-label="Key stats">
-  <div class="stats">
+  <div class="stats stagger reveal">
     <div class="stat">
-      <div class="stat-num"><span>40+</span></div>
+      <div class="stat-num"><span data-count="40" data-suffix="+">40+</span></div>
       <div class="stat-label">Supported agents</div>
     </div>
     <div class="stat">
-      <div class="stat-num"><span>3</span></div>
+      <div class="stat-num"><span data-count="3">3</span></div>
       <div class="stat-label">Parts every good<br>description needs</div>
     </div>
     <div class="stat">
-      <div class="stat-num"><span>0</span></div>
+      <div class="stat-num"><span data-count="0">0</span></div>
       <div class="stat-label">Original skills<br>modified</div>
     </div>
   </div>
@@ -484,9 +581,9 @@
 <!-- PROBLEM -->
 <section class="problem">
   <div class="section-inner">
-    <span class="section-label">The Problem</span>
-    <h2 class="section-title">Installed.<br>Never used.</h2>
-    <div class="problem-grid">
+    <span class="section-label reveal">The Problem</span>
+    <h2 class="section-title reveal">Installed.<br>Never used.</h2>
+    <div class="problem-grid stagger reveal">
       <div class="problem-item">
         <span class="problem-num">01.</span>
         <h3>Vague Descriptions</h3>
@@ -509,9 +606,9 @@
 <!-- HOW IT WORKS -->
 <section id="how">
   <div class="section-inner">
-    <span class="section-label">How It Works</span>
-    <h2 class="section-title">Wrap. Describe.<br>Trigger reliably.</h2>
-    <div class="how-grid">
+    <span class="section-label reveal">How It Works</span>
+    <h2 class="section-title reveal">Wrap. Describe.<br>Trigger reliably.</h2>
+    <div class="how-grid reveal">
       <div class="how-col">
         <div class="how-col-title">Before — vague, never triggers</div>
         <pre><span class="dim">animate/SKILL.md</span>
@@ -538,7 +635,7 @@ description: &gt;
 <span class="dim">use for writing new components.</span></pre>
       </div>
     </div>
-    <p class="how-note">
+    <p class="how-note reveal">
       The router synthesizes a WHAT + WHEN + NOT-WHEN description from the sub-skills' actual content. When triggered, it dispatches to the right original skill. Originals are never modified.
     </p>
   </div>
@@ -547,13 +644,13 @@ description: &gt;
 <!-- WORKFLOW -->
 <section id="workflow">
   <div class="section-inner">
-    <span class="section-label">Workflow</span>
-    <h2 class="section-title">Six steps.<br>Done.</h2>
-    <div class="workflow-steps">
+    <span class="section-label reveal">Workflow</span>
+    <h2 class="section-title reveal">Six steps.<br>Done.</h2>
+    <div class="workflow-steps stagger reveal">
       <div class="step">
         <span class="step-num" aria-hidden="true">1</span>
         <h3>Detect</h3>
-        <p>Auto-detects which AI agent tool directories exist in the current project.</p>
+        <p>Scans the project for known agent directories — with smart markers to avoid false positives.</p>
       </div>
       <div class="step">
         <span class="step-num" aria-hidden="true">2</span>
@@ -587,11 +684,11 @@ description: &gt;
 <!-- AGENTS -->
 <section id="agents">
   <div class="section-inner">
-    <span class="section-label">Supported Agents</span>
-    <h2 class="section-title">Works with<br>40+ agents.</h2>
+    <span class="section-label reveal">Supported Agents</span>
+    <h2 class="section-title reveal">Works with<br>40+ agents.</h2>
 
-    <div class="agents-subhead">Universal agents (share .agents/skills/)</div>
-    <div class="agents-grid" role="list" aria-label="Universal agents">
+    <div class="agents-subhead reveal">Universal agents (share .agents/skills/)</div>
+    <div class="agents-grid stagger-chips" role="list" aria-label="Universal agents">
       <div class="agent-chip" role="listitem">amp</div>
       <div class="agent-chip" role="listitem">antigravity</div>
       <div class="agent-chip" role="listitem">cline</div>
@@ -606,8 +703,8 @@ description: &gt;
       <div class="agent-chip" role="listitem">warp</div>
     </div>
 
-    <div class="agents-subhead">Non-universal agents (dedicated directories)</div>
-    <div class="agents-grid" role="list" aria-label="Non-universal agents">
+    <div class="agents-subhead reveal">Non-universal agents (dedicated directories)</div>
+    <div class="agents-grid stagger-chips" role="list" aria-label="Non-universal agents">
       <div class="agent-chip" role="listitem">adal</div>
       <div class="agent-chip" role="listitem">augment</div>
       <div class="agent-chip" role="listitem">claude code</div>
@@ -627,7 +724,7 @@ description: &gt;
       <div class="agent-chip" role="listitem">mistral vibe</div>
       <div class="agent-chip" role="listitem">mux</div>
       <div class="agent-chip" role="listitem">neovate</div>
-      <div class="agent-chip" role="listitem">openclaw</div>
+      <div class="agent-chip" role="listitem">openclaw ¹</div>
       <div class="agent-chip" role="listitem">openhands</div>
       <div class="agent-chip" role="listitem">pi</div>
       <div class="agent-chip" role="listitem">pochi</div>
@@ -639,20 +736,24 @@ description: &gt;
       <div class="agent-chip" role="listitem">windsurf</div>
       <div class="agent-chip" role="listitem">zencoder</div>
     </div>
+
+    <p class="how-note reveal" style="margin-top:1.5rem;">
+      ¹ OpenClaw uses a generic <code>skills/</code> directory name. Detection requires a <code>.openclaw/</code> marker in the project root to avoid false positives.
+    </p>
   </div>
 </section>
 
 <!-- GET STARTED -->
 <section id="start">
   <div class="section-inner">
-    <span class="section-label">Get Started</span>
-    <h2 class="section-title">Install in<br>one command.</h2>
-    <div class="install-box" role="region" aria-label="Installation commands">
+    <span class="section-label reveal">Get Started</span>
+    <h2 class="section-title reveal">Install in<br>one command.</h2>
+    <div class="install-box reveal" role="region" aria-label="Installation commands">
       <span class="cmd">npx skills install chrishan17/skill-router</span><br><br>
       <span class="comment"># Then tell your agent:</span><br>
       <span class="cmd">/skill-router</span>
     </div>
-    <a href="https://github.com/chrishan17/skill-router" class="btn btn-primary" target="_blank" rel="noopener">
+    <a href="https://github.com/chrishan17/skill-router" class="btn btn-primary reveal" target="_blank" rel="noopener">
       View Full Docs on GitHub →
     </a>
   </div>
@@ -665,6 +766,51 @@ description: &gt;
   <p>skill-router · v1.0.1 · <a href="https://github.com/chrishan17/skill-router/blob/main/LICENSE">MIT License</a></p>
   <p><a href="https://github.com/chrishan17/skill-router">github.com/chrishan17/skill-router</a></p>
 </footer>
+
+<script>
+  // ── SCROLL REVEAL ──
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add('visible');
+      revealObserver.unobserve(entry.target);
+    });
+  }, { threshold: 0.12 });
+
+  document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+  document.querySelectorAll('.stagger-chips').forEach(el => revealObserver.observe(el));
+
+  // ── STAT COUNTERS ──
+  function animateCount(el, target, suffix) {
+    // Skip if target is 0 (no animation needed)
+    if (target === 0) return;
+    const duration = 1100;
+    let startTime = null;
+    function step(ts) {
+      if (!startTime) startTime = ts;
+      const progress = Math.min((ts - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      el.textContent = Math.round(eased * target) + (suffix || '');
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  const statObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      entry.target.querySelectorAll('[data-count]').forEach(el => {
+        const target = parseInt(el.dataset.count, 10);
+        const suffix = el.dataset.suffix || '';
+        animateCount(el, target, suffix);
+      });
+      statObserver.unobserve(entry.target);
+    });
+  }, { threshold: 0.5 });
+
+  const statsEl = document.querySelector('.stats');
+  if (statsEl) statObserver.observe(statsEl);
+</script>
 
 </body>
 </html>

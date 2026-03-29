@@ -77,7 +77,7 @@ _PROJECT_AGENT_RULES = [
     {"tool": "antigravity", "display_name": "Antigravity", "skills_dir": ".agents/skills"},
     {"tool": "augment", "display_name": "Augment", "skills_dir": ".augment/skills"},
     {"tool": "claude-code", "display_name": "Claude Code", "skills_dir": ".claude/skills"},
-    {"tool": "openclaw", "display_name": "OpenClaw", "skills_dir": "skills"},
+    {"tool": "openclaw", "display_name": "OpenClaw", "skills_dir": "skills", "required_marker": ".openclaw"},
     {"tool": "cline", "display_name": "Cline", "skills_dir": ".agents/skills"},
     {"tool": "codebuddy", "display_name": "CodeBuddy", "skills_dir": ".codebuddy/skills"},
     {"tool": "codex", "display_name": "Codex", "skills_dir": ".agents/skills"},
@@ -134,8 +134,12 @@ def _present_project_agent_rules(cwd: Path) -> list[dict]:
     present: list[dict] = []
     for rule in _PROJECT_AGENT_RULES:
         project_path = cwd / rule["skills_dir"]
-        if project_path.is_dir():
-            present.append({**rule, "project_path": project_path})
+        if not project_path.is_dir():
+            continue
+        marker = rule.get("required_marker")
+        if marker and not (cwd / marker).exists():
+            continue
+        present.append({**rule, "project_path": project_path})
     return present
 
 
@@ -511,6 +515,132 @@ def _filter_ungrouped_skills(skills: list[dict]) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
+# Sub-skill invocation control
+# ---------------------------------------------------------------------------
+
+def _set_disable_model_invocation_in_text(content: str, enable: bool) -> tuple[str, bool]:
+    """Add or remove ``disable-model-invocation: true`` in a SKILL.md frontmatter.
+
+    Returns ``(new_content, was_changed)``.  Only the first frontmatter block is
+    modified.  When *enable* is True the field is inserted just before the closing
+    ``---``; when False the field line is removed entirely.
+    """
+    lines = content.splitlines(keepends=True)
+    if not lines or lines[0].strip() != "---":
+        return content, False
+
+    close_idx: int | None = None
+    for i in range(1, len(lines)):
+        if lines[i].strip() == "---":
+            close_idx = i
+            break
+    if close_idx is None:
+        return content, False
+
+    field_idx: int | None = None
+    for i in range(1, close_idx):
+        if lines[i].startswith("disable-model-invocation:"):
+            field_idx = i
+            break
+
+    if enable:
+        if field_idx is not None:
+            current_val = lines[field_idx].split(":", 1)[1].strip().lower()
+            if current_val == "true":
+                return content, False  # already enabled — no change needed
+            lines[field_idx] = "disable-model-invocation: true\n"
+        else:
+            lines.insert(close_idx, "disable-model-invocation: true\n")
+    else:
+        if field_idx is None:
+            return content, False  # field absent — nothing to remove
+        lines.pop(field_idx)
+
+    return "".join(lines), True
+
+
+def set_skill_disable_model_invocation(skill_path: Path, enable: bool) -> bool:
+    """Write ``disable-model-invocation: true/false`` to a skill's SKILL.md.
+
+    Returns True if the file was actually modified.
+    """
+    skill_md = find_skill_md(skill_path)
+    if skill_md is None:
+        return False
+    try:
+        content = skill_md.read_text(encoding="utf-8")
+        new_content, changed = _set_disable_model_invocation_in_text(content, enable)
+        if changed:
+            skill_md.write_text(new_content, encoding="utf-8")
+        return changed
+    except (OSError, UnicodeDecodeError):
+        return False
+
+
+def _get_skill_disable_model_invocation(skill_path: Path) -> bool | None:
+    """Return True/False if the field is explicitly set, None if absent."""
+    skill_md = find_skill_md(skill_path)
+    if skill_md is None:
+        return None
+    try:
+        fm = parse_frontmatter(skill_md.read_text(encoding="utf-8"))
+        if "disable-model-invocation" not in fm:
+            return None
+        val = fm["disable-model-invocation"]
+        if isinstance(val, bool):
+            return val
+        return str(val).lower() == "true"
+    except (OSError, UnicodeDecodeError):
+        return None
+
+
+def _suppress_subskill_invocations(
+    skills_dir: Path,
+    skill_folder_names: list[str],
+    manifest: dict,
+) -> list[str]:
+    """Set ``disable-model-invocation: true`` on sub-skills that don't already
+    have the field set (in either direction).
+
+    Only skills whose frontmatter has *no* ``disable-model-invocation`` field
+    are modified.  Skills that already carry the field (true or false) are left
+    untouched so we don't override an explicit author choice.
+
+    Returns the list of folder names that were actually modified.
+    """
+    already_tracked: set[str] = set(manifest.get("invocation_disabled_by_router", []))
+    newly_disabled: list[str] = []
+    for folder_name in skill_folder_names:
+        if folder_name in already_tracked:
+            continue
+        skill_path = skills_dir / folder_name
+        if not skill_path.is_dir():
+            continue
+        if _get_skill_disable_model_invocation(skill_path) is not None:
+            continue  # field already set explicitly — don't touch it
+        if set_skill_disable_model_invocation(skill_path, True):
+            newly_disabled.append(folder_name)
+    return newly_disabled
+
+
+def _restore_subskill_invocations(skills_dir: Path, manifest: dict) -> list[str]:
+    """Remove ``disable-model-invocation: true`` from skills we previously suppressed.
+
+    Only removes the field from skills listed in ``manifest["invocation_disabled_by_router"]``.
+    Returns the list of folder names that were actually restored.
+    """
+    to_restore: list[str] = manifest.get("invocation_disabled_by_router", [])
+    restored: list[str] = []
+    for folder_name in to_restore:
+        skill_path = skills_dir / folder_name
+        if not skill_path.is_dir():
+            continue
+        if set_skill_disable_model_invocation(skill_path, False):
+            restored.append(folder_name)
+    return restored
+
+
+# ---------------------------------------------------------------------------
 # Core operations
 # ---------------------------------------------------------------------------
 
@@ -601,9 +731,24 @@ def create_router(
 
     router_path.mkdir(parents=True, exist_ok=True)
     manifest = create_manifest(router_name, skill_entries, skills_dir, description)
+
+    # Pre-compute which sub-skills need invocation suppressed so the manifest
+    # is written with the correct tracking list in a single _save_router call.
+    skills_to_disable = [
+        e["folder_name"] for e in skill_entries
+        if _get_skill_disable_model_invocation(skills_dir / e["folder_name"]) is None
+    ]
+    if skills_to_disable:
+        manifest["invocation_disabled_by_router"] = skills_to_disable
+
     _save_router(router_path, router_name, skill_entries, manifest, skills_dir, description)
 
+    # Apply the flag to sub-skill files after the router itself is written.
+    for folder_name in skills_to_disable:
+        set_skill_disable_model_invocation(skills_dir / folder_name, True)
+
     result["created"] = str(router_path)
+    result["invocation_disabled"] = skills_to_disable
     return result
 
 
@@ -681,6 +826,12 @@ def delete_router(router_name: str, skills_dir: Path, dry_run: bool = False) -> 
     if dry_run:
         return result
 
+    # Restore sub-skill invocation control before the router directory is removed.
+    manifest = load_manifest(router_path)
+    if manifest:
+        source_skills_dir = _resolve_source_skills_dir(manifest, skills_dir, router_path)
+        result["invocation_restored"] = _restore_subskill_invocations(source_skills_dir, manifest)
+
     # Warn about unexpected files beyond known router files
     known_files = {"SKILL.md", "_manifest.json"}
     extra = [f.name for f in router_path.iterdir() if f.is_file() and f.name not in known_files]
@@ -736,14 +887,26 @@ def add_skill(
 
     # Add to manifest and regenerate
     skill_name_val, skill_desc = _read_skill_name_and_description(resolved)
+    source_skills_dir = _resolve_source_skills_dir(manifest, skills_dir, router_path)
+
+    # Pre-compute invocation control so the manifest is correct in one write.
+    should_disable = _get_skill_disable_model_invocation(source_skills_dir / skill_name) is None
+    if should_disable:
+        disabled = list(manifest.get("invocation_disabled_by_router", []))
+        disabled.append(skill_name)
+        manifest["invocation_disabled_by_router"] = disabled
+
     manifest["skills"].append({
         "name": skill_name_val,
         "folder_name": skill_name,
         "description_at_merge": skill_desc,
     })
-    source_skills_dir = _resolve_source_skills_dir(manifest, skills_dir, router_path)
     skill_entries = _load_skill_entries_from_manifest(manifest, source_skills_dir)
     _save_router(router_path, router_name, skill_entries, manifest, source_skills_dir)
+
+    if should_disable:
+        set_skill_disable_model_invocation(source_skills_dir / skill_name, True)
+        result["invocation_disabled"] = [skill_name]
 
     result["total_skills"] = len(skill_entries)
     return result
@@ -785,10 +948,22 @@ def remove_skill(
         result["total_skills"] = len(manifest["skills"]) - 1
         return result
 
-    manifest["skills"] = [s for s in manifest["skills"] if s["folder_name"] != skill_name]
     source_skills_dir = _resolve_source_skills_dir(manifest, skills_dir, router_path)
+
+    # Pre-compute invocation restore so the manifest is correct in one write.
+    disabled = list(manifest.get("invocation_disabled_by_router", []))
+    should_restore = skill_name in disabled
+    if should_restore:
+        disabled.remove(skill_name)
+        manifest["invocation_disabled_by_router"] = disabled
+
+    manifest["skills"] = [s for s in manifest["skills"] if s["folder_name"] != skill_name]
     skill_entries = _load_skill_entries_from_manifest(manifest, source_skills_dir)
     _save_router(router_path, router_name, skill_entries, manifest, source_skills_dir)
+
+    if should_restore:
+        set_skill_disable_model_invocation(source_skills_dir / skill_name, False)
+        result["invocation_restored"] = [skill_name]
 
     result["total_skills"] = len(skill_entries)
     return result

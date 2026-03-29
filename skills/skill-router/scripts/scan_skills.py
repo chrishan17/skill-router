@@ -26,7 +26,7 @@ MAX_COMPATIBILITY_LENGTH = 500
 ALLOWED_FRONTMATTER_FIELDS = {
     "name", "description", "license", "allowed-tools", "metadata", "compatibility",
     # Extensions used by Claude Code and other agents
-    "args", "user-invokable", "version",
+    "args", "user-invokable", "version", "disable-model-invocation",
 }
 
 
