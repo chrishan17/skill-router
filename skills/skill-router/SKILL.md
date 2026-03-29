@@ -11,7 +11,7 @@ description: >
 disable-model-invocation: true
 metadata:
   author: chrishan
-  version: 1.0.1
+  version: 1.0.2
   category: skill-management
   tags: "skills, router, merge, organize, group, multi-tool"
 ---
