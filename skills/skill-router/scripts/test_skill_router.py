@@ -14,6 +14,8 @@ from scan_skills import parse_frontmatter  # noqa: E402
 from skill_router import (  # noqa: E402
     _build_fallback_description,
     _filter_ungrouped_skills,
+    _get_skill_disable_model_invocation,
+    _set_disable_model_invocation_in_text,
     _validate_router_name,
     _wrap_yaml_description,
     add_skill,
@@ -27,6 +29,7 @@ from skill_router import (  # noqa: E402
     remove_skill,
     rename_router,
     save_strategy,
+    set_skill_disable_model_invocation,
 )
 
 
@@ -1005,6 +1008,291 @@ class RenameRouterDryRunTests(unittest.TestCase):
             self.assertTrue(result["dry_run"])
             self.assertTrue((skills_dir / "my-router").exists())
             self.assertFalse((skills_dir / "new-router").exists())
+
+
+# ---------------------------------------------------------------------------
+# _set_disable_model_invocation_in_text (unit tests)
+# ---------------------------------------------------------------------------
+
+class SetDisableModelInvocationTextTests(unittest.TestCase):
+    def test_add_field_inserts_line_before_closing_fence(self) -> None:
+        content = "---\nname: foo\ndescription: >\n  bar\n---\n\n# Foo\n"
+        new_content, changed = _set_disable_model_invocation_in_text(content, True)
+        self.assertTrue(changed)
+        fm = parse_frontmatter(new_content)
+        self.assertTrue(fm.get("disable-model-invocation"))
+        # Body must be unchanged
+        self.assertIn("# Foo", new_content)
+
+    def test_remove_field_strips_line_from_frontmatter(self) -> None:
+        content = "---\nname: foo\ndisable-model-invocation: true\n---\n\n# Foo\n"
+        new_content, changed = _set_disable_model_invocation_in_text(content, False)
+        self.assertTrue(changed)
+        fm = parse_frontmatter(new_content)
+        self.assertNotIn("disable-model-invocation", fm)
+        self.assertIn("# Foo", new_content)
+
+    def test_add_is_idempotent_when_already_true(self) -> None:
+        content = "---\nname: foo\ndisable-model-invocation: true\n---\n"
+        _, changed = _set_disable_model_invocation_in_text(content, True)
+        self.assertFalse(changed)
+
+    def test_remove_is_idempotent_when_field_absent(self) -> None:
+        content = "---\nname: foo\n---\n"
+        _, changed = _set_disable_model_invocation_in_text(content, False)
+        self.assertFalse(changed)
+
+    def test_no_frontmatter_returns_unchanged(self) -> None:
+        content = "# Just a header\nNo frontmatter here\n"
+        new_content, changed = _set_disable_model_invocation_in_text(content, True)
+        self.assertFalse(changed)
+        self.assertEqual(new_content, content)
+
+    def test_updates_explicit_false_to_true(self) -> None:
+        content = "---\nname: foo\ndisable-model-invocation: false\n---\n"
+        new_content, changed = _set_disable_model_invocation_in_text(content, True)
+        self.assertTrue(changed)
+        fm = parse_frontmatter(new_content)
+        self.assertTrue(fm.get("disable-model-invocation"))
+
+    def test_body_content_preserved_after_add(self) -> None:
+        content = "---\nname: foo\n---\n\n## Instructions\nDo the thing.\n"
+        new_content, _ = _set_disable_model_invocation_in_text(content, True)
+        self.assertIn("## Instructions\nDo the thing.", new_content)
+
+
+# ---------------------------------------------------------------------------
+# Sub-skill invocation control (integration tests)
+# ---------------------------------------------------------------------------
+
+def _write_skill_with_disable_flag(
+    skills_dir: Path, name: str, description: str, disable: bool = False
+) -> None:
+    """Write a skill, optionally pre-setting disable-model-invocation."""
+    skill_dir = skills_dir / name
+    skill_dir.mkdir(parents=True, exist_ok=True)
+    lines = [
+        "---",
+        f"name: {name}",
+        "description: >",
+        f"  {description}",
+    ]
+    if disable:
+        lines.append("disable-model-invocation: true")
+    lines += ["---", "", f"# {name}", ""]
+    (skill_dir / "SKILL.md").write_text("\n".join(lines), encoding="utf-8")
+
+
+def _read_disable_flag(skills_dir: Path, name: str) -> bool | None:
+    """Return the disable-model-invocation value (None if absent)."""
+    skill_md = skills_dir / name / "SKILL.md"
+    if not skill_md.exists():
+        return None
+    return _get_skill_disable_model_invocation(skills_dir / name)
+
+
+class SubskillInvocationControlTests(unittest.TestCase):
+    """create/delete/add/remove all maintain disable-model-invocation correctly."""
+
+    def test_create_router_sets_flag_on_subskills(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="skill-router-test-") as tmp:
+            skills_dir = Path(tmp) / "skills"
+            skills_dir.mkdir()
+            write_skill(skills_dir, "audit", "Audit interfaces.")
+            write_skill(skills_dir, "harden", "Harden interfaces.")
+
+            create_router("design-quality", ["audit", "harden"], skills_dir)
+
+            self.assertTrue(_read_disable_flag(skills_dir, "audit"))
+            self.assertTrue(_read_disable_flag(skills_dir, "harden"))
+
+    def test_create_router_tracks_disabled_skills_in_manifest(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="skill-router-test-") as tmp:
+            skills_dir = Path(tmp) / "skills"
+            skills_dir.mkdir()
+            write_skill(skills_dir, "audit", "Audit interfaces.")
+            write_skill(skills_dir, "harden", "Harden interfaces.")
+
+            create_router("design-quality", ["audit", "harden"], skills_dir)
+
+            manifest = json.loads(
+                (skills_dir / "design-quality" / "_manifest.json").read_text(encoding="utf-8")
+            )
+            self.assertCountEqual(manifest["invocation_disabled_by_router"], ["audit", "harden"])
+
+    def test_create_router_skips_already_disabled_skills(self) -> None:
+        """A skill with disable-model-invocation already set must not be tracked."""
+        with tempfile.TemporaryDirectory(prefix="skill-router-test-") as tmp:
+            skills_dir = Path(tmp) / "skills"
+            skills_dir.mkdir()
+            write_skill(skills_dir, "audit", "Audit interfaces.")
+            _write_skill_with_disable_flag(skills_dir, "harden", "Harden interfaces.", disable=True)
+
+            create_router("design-quality", ["audit", "harden"], skills_dir)
+
+            manifest = json.loads(
+                (skills_dir / "design-quality" / "_manifest.json").read_text(encoding="utf-8")
+            )
+            self.assertIn("audit", manifest["invocation_disabled_by_router"])
+            self.assertNotIn("harden", manifest["invocation_disabled_by_router"])
+
+    def test_delete_router_restores_subskill_flags(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="skill-router-test-") as tmp:
+            skills_dir = Path(tmp) / "skills"
+            skills_dir.mkdir()
+            write_skill(skills_dir, "audit", "Audit interfaces.")
+            write_skill(skills_dir, "harden", "Harden interfaces.")
+            create_router("design-quality", ["audit", "harden"], skills_dir)
+
+            result = delete_router("design-quality", skills_dir)
+
+            self.assertFalse(result["errors"])
+            self.assertIsNone(_read_disable_flag(skills_dir, "audit"))
+            self.assertIsNone(_read_disable_flag(skills_dir, "harden"))
+
+    def test_delete_router_does_not_restore_pre_existing_flags(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="skill-router-test-") as tmp:
+            skills_dir = Path(tmp) / "skills"
+            skills_dir.mkdir()
+            write_skill(skills_dir, "audit", "Audit interfaces.")
+            _write_skill_with_disable_flag(skills_dir, "harden", "Harden interfaces.", disable=True)
+            create_router("design-quality", ["audit", "harden"], skills_dir)
+
+            delete_router("design-quality", skills_dir)
+
+            # audit had no prior flag — must be fully restored (field removed)
+            self.assertIsNone(_read_disable_flag(skills_dir, "audit"))
+            # harden had the flag before — must remain true
+            self.assertTrue(_read_disable_flag(skills_dir, "harden"))
+
+    def test_delete_router_dry_run_does_not_restore_flags(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="skill-router-test-") as tmp:
+            skills_dir = Path(tmp) / "skills"
+            skills_dir.mkdir()
+            write_skill(skills_dir, "audit", "Audit interfaces.")
+            create_router("design-quality", ["audit"], skills_dir)
+
+            delete_router("design-quality", skills_dir, dry_run=True)
+
+            # dry_run must not touch sub-skill files
+            self.assertTrue(_read_disable_flag(skills_dir, "audit"))
+
+    def test_add_skill_sets_flag_on_new_skill(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="skill-router-test-") as tmp:
+            skills_dir = Path(tmp) / "skills"
+            skills_dir.mkdir()
+            write_skill(skills_dir, "audit", "Audit interfaces.")
+            write_skill(skills_dir, "harden", "Harden interfaces.")
+            create_router("design-quality", ["audit"], skills_dir)
+
+            add_skill("design-quality", "harden", skills_dir)
+
+            self.assertTrue(_read_disable_flag(skills_dir, "harden"))
+            manifest = json.loads(
+                (skills_dir / "design-quality" / "_manifest.json").read_text(encoding="utf-8")
+            )
+            self.assertIn("harden", manifest["invocation_disabled_by_router"])
+
+    def test_add_skill_dry_run_does_not_set_flag(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="skill-router-test-") as tmp:
+            skills_dir = Path(tmp) / "skills"
+            skills_dir.mkdir()
+            write_skill(skills_dir, "audit", "Audit interfaces.")
+            write_skill(skills_dir, "harden", "Harden interfaces.")
+            create_router("design-quality", ["audit"], skills_dir)
+
+            add_skill("design-quality", "harden", skills_dir, dry_run=True)
+
+            self.assertIsNone(_read_disable_flag(skills_dir, "harden"))
+
+    def test_remove_skill_restores_flag_on_removed_skill(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="skill-router-test-") as tmp:
+            skills_dir = Path(tmp) / "skills"
+            skills_dir.mkdir()
+            write_skill(skills_dir, "audit", "Audit interfaces.")
+            write_skill(skills_dir, "harden", "Harden interfaces.")
+            create_router("design-quality", ["audit", "harden"], skills_dir)
+
+            remove_skill("design-quality", "harden", skills_dir)
+
+            self.assertIsNone(_read_disable_flag(skills_dir, "harden"))
+            manifest = json.loads(
+                (skills_dir / "design-quality" / "_manifest.json").read_text(encoding="utf-8")
+            )
+            self.assertNotIn("harden", manifest.get("invocation_disabled_by_router", []))
+
+    def test_remove_skill_does_not_restore_pre_existing_flag(self) -> None:
+        """Removing a skill that had the flag before routing must leave it set."""
+        with tempfile.TemporaryDirectory(prefix="skill-router-test-") as tmp:
+            skills_dir = Path(tmp) / "skills"
+            skills_dir.mkdir()
+            write_skill(skills_dir, "audit", "Audit interfaces.")
+            _write_skill_with_disable_flag(skills_dir, "harden", "Harden interfaces.", disable=True)
+            create_router("design-quality", ["audit", "harden"], skills_dir)
+
+            remove_skill("design-quality", "harden", skills_dir)
+
+            # harden was pre-disabled — flag must remain
+            self.assertTrue(_read_disable_flag(skills_dir, "harden"))
+
+    def test_create_router_dry_run_does_not_modify_subskills(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="skill-router-test-") as tmp:
+            skills_dir = Path(tmp) / "skills"
+            skills_dir.mkdir()
+            write_skill(skills_dir, "audit", "Audit interfaces.")
+            write_skill(skills_dir, "harden", "Harden interfaces.")
+
+            create_router("design-quality", ["audit", "harden"], skills_dir, dry_run=True)
+
+            self.assertIsNone(_read_disable_flag(skills_dir, "audit"))
+            self.assertIsNone(_read_disable_flag(skills_dir, "harden"))
+
+
+# ---------------------------------------------------------------------------
+# set_skill_disable_model_invocation (file I/O)
+# ---------------------------------------------------------------------------
+
+class SetSkillDisableModelInvocationTests(unittest.TestCase):
+    def test_sets_flag_on_skill_without_it(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="skill-router-test-") as tmp:
+            skills_dir = Path(tmp) / "skills"
+            skills_dir.mkdir()
+            write_skill(skills_dir, "audit", "Audit interfaces.")
+
+            changed = set_skill_disable_model_invocation(skills_dir / "audit", True)
+
+            self.assertTrue(changed)
+            self.assertTrue(_read_disable_flag(skills_dir, "audit"))
+
+    def test_removes_flag_from_skill_that_has_it(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="skill-router-test-") as tmp:
+            skills_dir = Path(tmp) / "skills"
+            skills_dir.mkdir()
+            _write_skill_with_disable_flag(skills_dir, "audit", "Audit interfaces.", disable=True)
+
+            changed = set_skill_disable_model_invocation(skills_dir / "audit", False)
+
+            self.assertTrue(changed)
+            self.assertIsNone(_read_disable_flag(skills_dir, "audit"))
+
+    def test_returns_false_when_no_change_needed(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="skill-router-test-") as tmp:
+            skills_dir = Path(tmp) / "skills"
+            skills_dir.mkdir()
+            _write_skill_with_disable_flag(skills_dir, "audit", "Audit interfaces.", disable=True)
+
+            changed = set_skill_disable_model_invocation(skills_dir / "audit", True)
+
+            self.assertFalse(changed)
+
+    def test_returns_false_for_missing_skill(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="skill-router-test-") as tmp:
+            skills_dir = Path(tmp) / "skills"
+            skills_dir.mkdir()
+
+            changed = set_skill_disable_model_invocation(skills_dir / "nonexistent", True)
+
+            self.assertFalse(changed)
 
 
 if __name__ == "__main__":

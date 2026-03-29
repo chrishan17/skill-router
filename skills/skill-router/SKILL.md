@@ -8,6 +8,7 @@ description: >
   after sub-skills have changed, or wants to remove a router they no longer need. Do NOT use
   for creating brand-new skills (skill-creator), discovering or installing skills (find-skills),
   or general code review unrelated to skill organisation.
+disable-model-invocation: true
 metadata:
   author: chrishan
   version: 1.0.1
