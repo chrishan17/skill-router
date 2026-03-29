@@ -6,19 +6,27 @@
 [![Agents](https://img.shields.io/badge/agents-40%2B-yellow?style=flat-square)](skills/skill-router/references/supported-agents.md)
 [![GitHub Pages](https://img.shields.io/badge/docs-GitHub%20Pages-black?style=flat-square)](https://chrishan17.github.io/skill-router/)
 
-An AI agent skill that wraps poorly-described skills in a **well-written router** — so your agent actually knows when to invoke them.
+An AI agent skill that groups skills under a **well-written router** — fixing trigger reliability and recovering context headroom at the same time.
 
 ---
 
 ## The Problem
 
+### Skills don't trigger
+
 Skills only trigger when the agent understands their description well enough to match them to a user request. Most third-party skills are written without explicit trigger conditions: no *when to use*, no *when not to use*, just a vague summary of what the skill does.
 
 The result: you install a skill and your agent never uses it — not because the skill is broken, but because the description doesn't tell the agent when it's relevant.
 
-**skill-router** wraps one or more skills in a new router skill with a properly synthesized description following the **WHAT + WHEN + NOT-WHEN** pattern. The originals are untouched; the router makes them reliably invokable.
+### Skills eat your context window
+
+Every installed skill loads its description into the agent's context window at startup — before your first message. Install 20–30 skills and you've burned thousands of tokens on overhead before any real work begins. That's context you can't use for code, documents, or conversation.
+
+**skill-router** addresses both problems at once.
 
 ## How It Works
+
+### Better descriptions
 
 Third-party skills often ship with descriptions like this:
 
@@ -46,7 +54,31 @@ The router's `SKILL.md` contains:
 - A Dispatch section with relative references to each original skill
 - A Capabilities section listing each sub-skill's full description
 
-**Original skills are never moved, merged, or modified.** They remain fully functional as direct slash commands and can still be invoked independently.
+### Less context overhead
+
+When skill-router creates a router, it automatically sets `disable-model-invocation: true` on every sub-skill. This tells the agent not to load those descriptions into context. Only the single router description loads at startup:
+
+```
+# Before — 21 skills in context
+animate      (~300 tokens)
+polish       (~280 tokens)
+critique     (~260 tokens)
+... 18 more ...
+──────────────────────────────
+Total overhead: ~6,000+ tokens
+
+# After — 1 router in context
+ui-design    (~400 tokens)   ← only this loads
+animate      disable-model-invocation: true  ← suppressed
+polish       disable-model-invocation: true  ← suppressed
+... 18 more suppressed ...
+──────────────────────────────
+Total overhead: ~400 tokens
+```
+
+Twenty-one descriptions collapse into one. The sub-skills are still fully accessible via the router — they're just not wasting context until they're needed.
+
+**Original skills are never moved or deleted.** They remain functional as direct slash commands (`/animate`, `/polish`, etc.) and can still be invoked independently.
 
 ---
 

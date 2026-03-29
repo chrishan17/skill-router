@@ -376,6 +376,103 @@
       color: var(--gray-50);
     }
 
+    /* ── CONTEXT OVERHEAD ── */
+    #context { border-bottom: var(--border); }
+    .context-compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border: var(--border);
+      margin-bottom: 2rem;
+    }
+    .context-col {
+      padding: 2rem;
+      overflow: hidden;
+    }
+    .context-col + .context-col {
+      border-left: var(--border);
+    }
+    .context-col-label {
+      font-family: var(--font-sans);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid var(--black);
+    }
+    .context-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 1.5rem;
+      min-height: 5rem;
+    }
+    .context-pill {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      padding: 3px 8px;
+      border: 2px solid var(--gray-15);
+      color: var(--gray-50);
+      white-space: nowrap;
+    }
+    .context-pill-router {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 8px 16px;
+      border: var(--border);
+      background: var(--yellow);
+      color: var(--black);
+      display: inline-block;
+      margin-bottom: 1rem;
+    }
+    .context-suppressed {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--gray-30);
+      line-height: 1.9;
+    }
+    .context-suppressed span { text-decoration: line-through; opacity: 0.5; }
+    .context-meter {
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 2px solid var(--black);
+    }
+    .context-meter-label {
+      font-family: var(--font-sans);
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gray-50);
+      margin-bottom: 0.5rem;
+    }
+    .context-bar-track {
+      height: 12px;
+      background: var(--gray-05);
+      border: 2px solid var(--gray-15);
+      position: relative;
+      overflow: hidden;
+    }
+    .context-bar-fill {
+      height: 100%;
+      background: var(--gray-70);
+      transition: width 1s ease 0.3s;
+    }
+    .context-bar-fill.yellow { background: var(--yellow); }
+    .context-bar-value {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--gray-50);
+      margin-top: 0.4rem;
+    }
+    @media (max-width: 680px) {
+      .context-compare { grid-template-columns: 1fr; }
+      .context-col + .context-col { border-left: none; border-top: var(--border); }
+    }
+
     /* ── WORKFLOW ── */
     #workflow { border-bottom: var(--border); }
     .workflow-steps {
@@ -551,7 +648,7 @@
     <span class="hero-tag">v1.0.1 · MIT · Python 3.9+</span>
     <div class="hero">
       <h1>Skills you<br>installed but<br>never <em>trigger.</em></h1>
-      <p>skill-router wraps poorly-described skills in a router with a proper WHAT + WHEN + NOT-WHEN description — so your agent actually knows when to use them.</p>
+      <p>skill-router groups skills under a well-described router — fixing trigger reliability and recovering context headroom at the same time.</p>
       <div class="hero-ctas">
         <a href="#start" class="btn btn-primary">Get Started →</a>
         <a href="https://github.com/chrishan17/skill-router" class="btn btn-secondary" target="_blank" rel="noopener">View on GitHub</a>
@@ -599,6 +696,11 @@
         <h3>No NOT-WHEN Boundaries</h3>
         <p>Without negative trigger conditions, the agent can't distinguish between adjacent skills. A UI review skill and a UI polish skill look identical from the description alone. One crowds out the other.</p>
       </div>
+      <div class="problem-item">
+        <span class="problem-num">04.</span>
+        <h3>Context Window Bloat</h3>
+        <p>Every installed skill loads its description into the agent's context at startup. Install 30 skills and you've burned thousands of tokens before the first message — leaving less room for your actual work.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -637,6 +739,77 @@ description: &gt;
     </div>
     <p class="how-note reveal">
       The router synthesizes a WHAT + WHEN + NOT-WHEN description from the sub-skills' actual content. When triggered, it dispatches to the right original skill. Originals are never modified.
+    </p>
+  </div>
+</section>
+
+<!-- CONTEXT OVERHEAD -->
+<section id="context">
+  <div class="section-inner">
+    <span class="section-label reveal">Context Overhead</span>
+    <h2 class="section-title reveal">N skills.<br>One entry.</h2>
+    <p class="how-note reveal" style="margin-bottom: 2.5rem; font-size: 0.9rem; color: var(--gray-70);">
+      Every installed skill loads its description into the agent's context window at startup — before your first message. skill-router suppresses sub-skill descriptions automatically, so only the router's single entry loads. Same capabilities. A fraction of the overhead.
+    </p>
+    <div class="context-compare reveal">
+      <!-- BEFORE -->
+      <div class="context-col">
+        <div class="context-col-label">Before — every skill in context</div>
+        <div class="context-pills">
+          <div class="context-pill">animate</div>
+          <div class="context-pill">polish</div>
+          <div class="context-pill">critique</div>
+          <div class="context-pill">arrange</div>
+          <div class="context-pill">audit</div>
+          <div class="context-pill">colorize</div>
+          <div class="context-pill">bolder</div>
+          <div class="context-pill">clarify</div>
+          <div class="context-pill">delight</div>
+          <div class="context-pill">distill</div>
+          <div class="context-pill">extract</div>
+          <div class="context-pill">frontend</div>
+          <div class="context-pill">harden</div>
+          <div class="context-pill">normalize</div>
+          <div class="context-pill">onboard</div>
+          <div class="context-pill">optimize</div>
+          <div class="context-pill">overdrive</div>
+          <div class="context-pill">quieter</div>
+          <div class="context-pill">typeset</div>
+          <div class="context-pill">adapt</div>
+          <div class="context-pill">teach-…</div>
+        </div>
+        <div class="context-meter">
+          <div class="context-meter-label">Context used at startup</div>
+          <div class="context-bar-track">
+            <div class="context-bar-fill" style="width: 0%" data-width="100%"></div>
+          </div>
+          <div class="context-bar-value">21 descriptions · ~6,000+ tokens</div>
+        </div>
+      </div>
+      <!-- AFTER -->
+      <div class="context-col">
+        <div class="context-col-label">After — only the router in context</div>
+        <div style="margin-bottom: 1.5rem;">
+          <div class="context-pill-router">ui-design</div>
+          <div class="context-suppressed">
+            <span>animate</span> disable-model-invocation: true<br>
+            <span>polish</span> disable-model-invocation: true<br>
+            <span>critique</span> disable-model-invocation: true<br>
+            <span>arrange</span> disable-model-invocation: true<br>
+            · · · 17 more suppressed · · ·
+          </div>
+        </div>
+        <div class="context-meter">
+          <div class="context-meter-label">Context used at startup</div>
+          <div class="context-bar-track">
+            <div class="context-bar-fill yellow" style="width: 0%" data-width="5%"></div>
+          </div>
+          <div class="context-bar-value">1 description · ~400 tokens</div>
+        </div>
+      </div>
+    </div>
+    <p class="how-note reveal">
+      Sub-skills remain fully accessible — the router dispatches to them on demand. They just don't occupy context until they're needed.
     </p>
   </div>
 </section>
@@ -769,6 +942,20 @@ description: &gt;
 
 <script>
   // ── SCROLL REVEAL ──
+  // Animate context bars when their section scrolls in
+  const barObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      entry.target.querySelectorAll('.context-bar-fill[data-width]').forEach(bar => {
+        bar.style.width = bar.dataset.width;
+      });
+      barObserver.unobserve(entry.target);
+    });
+  }, { threshold: 0.3 });
+
+  const contextSection = document.getElementById('context');
+  if (contextSection) barObserver.observe(contextSection);
+
   const revealObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (!entry.isIntersecting) return;
